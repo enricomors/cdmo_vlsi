@@ -60,9 +60,9 @@ def start_solving(instance, runtimes, index, args):
     print(f'Solving Instance {index}')
 
     if args.rotation:
-        model = order_enc_rot # use rotation model
+        model = order_enc_rot  # use rotation model
     else:
-        model = order_enc # use standard model
+        model = order_enc  # use standard model
 
     p = multiprocessing.Process(target=model, args=(instance, index, args))
 
