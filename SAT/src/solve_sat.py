@@ -95,8 +95,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Creates output folder
-    if not os.path.exists(f'../../SAT/out'):
-        os.mkdir(f'../../SAT/out')
+    if not os.path.exists(f'/Users/gianluca_dinenno/Universita/combinatorial/cdmo_vlsi-1/SAT/out'):
+        os.mkdir(f'/Users/gianluca_dinenno/Universita/combinatorial/cdmo_vlsi-1/SAT/out')
 
     runtimes, runtimes_filename = get_runtimes(args)
 
@@ -104,7 +104,7 @@ if __name__ == "__main__":
     for i in range(args.start, args.end + 1):
         print('=' * 20)
         print(f'Instance {i}')
-        with open(f'../../instances/ins-{i}.txt') as f:
+        with open(f'/Users/gianluca_dinenno/Universita/combinatorial/cdmo_vlsi-1/instances/ins-{i}.txt') as f:
             lines = f.readlines()
         lines = [l.strip('\n') for l in lines]
         w = int(lines[0].strip('\n'))
