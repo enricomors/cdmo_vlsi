@@ -9,31 +9,44 @@ from z3 import *
 import time
 import os
 import multiprocessing
-
 import numpy as np
-
-
 from model import solve_instance
 from model_rot import solve_instance_rot
 
+#create runtime folder:
+project_folder = os.path.abspath(os.path.join(os.getcwd(), "..", ".."))
+runtimes_folder = os.path.join(project_folder, 'runtimes')
 
+if not os.path.exists(runtimes_folder):
+    os.mkdir(runtimes_folder)
+    print("Runtimes folder has been created correctly")
+
+#create output folder:
+if not os.path.exists(os.path.join(project_folder, 'SMT', 'out')):
+
+    os.mkdir(os.path.join(project_folder, 'SMT', 'out'))
+    os.mkdir(os.path.join(project_folder, 'SMT', 'out', 'texts'))
+    os.mkdir(os.path.join(project_folder, 'SMT', 'out', 'images'))
+
+    print("Output folders have been created correctly")
+
+#get runtimes
 def get_runtimes(args):
 
-    if not os.path.exists(r'C:\Users\sigge\Source\Repos\vlsi\runtimes'):
-        os.mkdir(r'C:\Users\sigge\Source\Repos\vlsi\runtimes')
+    s = 'SMT'\
+        '-sb' if args.symmetry_breaking else ''\
+        '-rot' if args.rotation else ''\
+        '.json'
 
-    name = f'C:/Users/sigge/Source/Repos/vlsi/runtimes/SMTrot' \
-           f'{"-sb" if args.symmetry_breaking else ""}' \
-           f'{"-rot" if args.rotation else ""}' \
-           f'.json'
-    '''
-    if os.path.isfile(name):  # z3 I hate your timeout bug so much
-        with open(name) as f:
+    file_name = os.path.join(runtimes_folder, s)
+    print(file_name)
+    if os.path.isfile(file_name):  # z3 I hate your timeout bug so much
+        with open(file_name) as f:
             data = {int(k): v for k, v in json.load(f).items()}
-    else:'
-        data = {}'''
-    data = {}
-    return data, name
+    else:
+        data = {}
+
+    return data, file_name
 
 
 def plot_board(width, height, blocks, index, show_plot=False, show_axis=False):
@@ -53,7 +66,7 @@ def plot_board(width, height, blocks, index, show_plot=False, show_axis=False):
     if not show_axis:
         ax.set_xticks([])
         ax.set_yticks([])
-    plt.savefig(f'../../SAT/out/fig-ins-{index}.png')
+    plt.savefig(os.path.join(project_folder, "SMT", "out", "images", f"fig-ins-{index}.png"))
     if show_plot:
         plt.show(block=False)
         plt.pause(1)
@@ -68,7 +81,7 @@ def start_solving(instance, runtimes, index, args):
     if args.rotation:
         model = solve_instance_rot  # use rotation model
     else:
-        model = solve_instance_rot      # use standard model
+        model = solve_instance     # use standard model
 
     p = multiprocessing.Process(target=model, args=(instance, index, args))
 
@@ -100,18 +113,21 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    # Creates output folder
-    if not os.path.exists(r'C:\Users\sigge\Source\Repos\vlsi\SMT\out'):
-        os.mkdir(r'C:\Users\sigge\Source\Repos\vlsi\SMT\out')
-
+    print("primo step")
     runtimes, runtimes_filename = get_runtimes(args)
-
+    print(runtimes_filename)
     # Solve Instances in range
-    for i in range(args.start, args.end + 1):
+    file_names = os.listdir(os.path.join(project_folder, 'instances'))
+    #print(file_names)
+    i = 1
+
+    for file_name in file_names:
         print('=' * 20)
         print(f'Instance {i}')
-        with open(f'C:/Users/sigge/Source/Repos/vlsi/instances/ins-{i}.txt') as f:
+
+        with open(os.path.join(project_folder, 'instances', file_name)) as f:
             lines = f.readlines()
+
         lines = [l.strip('\n') for l in lines]
         w = int(lines[0].strip('\n'))
         n = int(lines[1].strip('\n'))
@@ -134,3 +150,5 @@ if __name__ == "__main__":
         # Pass instance parameters to the solver
         instance = {"w": w, 'n': n, 'inputx': x, 'inputy': y, 'minh': minh, 'maxh': maxh}
         start_solving(instance, runtimes, i, args)
+
+        i += 1
