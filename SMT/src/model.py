@@ -156,6 +156,28 @@ def solve_instance(instance, index, args):
             ys.append(model.evaluate(y[i]))
         print("x:",xs)
         print("y:",ys)
+
+        instance['h'] = height
+        instance['xsol'] = xs
+        instance['ysol'] = ys
+        # output file
+        out = f"{instance['w']} {instance['h']}\n{instance['n']}\n"
+        out += '\n'.join([f"{xi} {yi} {xhati} {yhati}"
+                          for xi, yi, xhati, yhati in zip(instance['inputx'],
+                                                          instance['inputy'],
+                                                          instance['xsol'], instance['ysol'])])
+
+        project_folder = os.path.abspath(os.path.join(os.getcwd(), ".."))
+
+        s = 'out'\
+            f'{index}'\
+            '.txt'
+        pathname = os.path.join(project_folder, 'out', 'texts', s)
+
+        with open(pathname, 'w') as f:
+            print("dentro file", pathname)
+            f.write(out)
+
         return xs, ys, height, time.time()-start_time
     else:
         print("Time limit excedeed\n")
