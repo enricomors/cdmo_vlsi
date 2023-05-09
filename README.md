@@ -6,9 +6,3 @@ fit more and more transistors into the same area of silicon, has pushed the inte
 of cellphone circuitry into a single silicon die (i.e. plate). This enabled the modern cellphone to mature into a 
 powerful tool that shrank from the size of a large brick-sized unit to a device small enough to comfortably carry 
 in a pocket or purse, with a video camera, touchscreen, and other advanced features.
-
-
-
-PROVA 
-
-
