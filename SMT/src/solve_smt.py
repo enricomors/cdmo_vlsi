@@ -13,37 +13,27 @@ import numpy as np
 from model import solve_instance
 from model_rot import solve_instance_rot
 
-#create runtime folder:
-project_folder = os.path.abspath(os.path.join(os.getcwd(), "..", ".."))
-runtimes_folder = os.path.join(project_folder, 'runtimes')
-
-if not os.path.exists(runtimes_folder):
-    os.mkdir(runtimes_folder)
-    print("Runtimes folder has been created correctly")
-
-#create output folder:
-if not os.path.exists(os.path.join(project_folder, 'SMT', 'out')):
-
-    os.mkdir(os.path.join(project_folder, 'SMT', 'out'))
-    os.mkdir(os.path.join(project_folder, 'SMT', 'out', 'texts'))
-    os.mkdir(os.path.join(project_folder, 'SMT', 'out', 'images'))
-
-    print("Output folders have been created correctly")
 
 def mySort(e):
     return int(e[4:-4])
 
-
 #get runtimes
 def get_runtimes(args):
 
-    s = f'SMT'\
-        f'{"-sb" if args.symmetry_breaking else ""}'\
-        f'{"-rot" if args.rotation else ""}'\
-        f'{".json"}'
+    # create runtime folder if doesn't exists:
+    runtimes_folder = os.path.join(project_folder, 'runtimes')
+
+    if not os.path.exists(runtimes_folder):
+        os.mkdir(runtimes_folder)
+        print("Runtimes folder has been created correctly")
+
+    s = 'SMT'\
+        '-sb' if args.symmetry_breaking else ''\
+        '-rot' if args.rotation else ''\
+        '.json'
 
     file_name = os.path.join(runtimes_folder, s)
-    print(file_name)
+
     if os.path.isfile(file_name):  # z3 I hate your timeout bug so much
         with open(file_name) as f:
             data = {int(k): v for k, v in json.load(f).items()}
@@ -74,6 +64,11 @@ def plot_board(width, height, blocks, index, show_plot=False, show_axis=False):
         ax.set_yticks([])
 
     plt.savefig(os.path.join(project_folder, "out", "images", f"fig-ins-{index}.png"))
+
+    figure_folder = os.path.join(project_folder, "SMT", "out", "images", f"ins-{instance}.png")
+    plt.savefig(figure_folder)
+    print(f"figure ins-{instance}.png has been correctly saved at path '{figure_folder}'")
+
     if show_plot:
         plt.show(block=False)
         plt.pause(1)
@@ -111,6 +106,17 @@ def start_solving(instance, runtimes, index, args):
 
 
 if __name__ == "__main__":
+
+    #define outputs folder structure if not already created:
+    project_folder = os.path.abspath(os.path.join(os.getcwd(), "..", ".."))
+    outputs_folder = os.path.join(project_folder, 'SMT', 'out')
+
+    if not os.path.exists(outputs_folder):
+        os.mkdir(outputs_folder)
+        os.mkdir(os.path.join(outputs_folder, 'images'))
+        os.mkdir(os.path.join(outputs_folder, 'texts'))
+        print("Folders '../SMT/out/images' and '../SMT/out/texts' have been created correctly")
+
     parser = ArgumentParser()
     parser.add_argument('-s', '--start', type=int, help='First instance to solve', default=1)
     parser.add_argument('-e', '--end', type=int, help='Last instance to solve', default=40)
@@ -120,20 +126,23 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    print("primo step")
+
     runtimes, runtimes_filename = get_runtimes(args)
+    '''
     print(runtimes_filename)
     # Solve Instances in range
     file_names = os.listdir(os.path.join(project_folder, 'instances'))
     file_names.sort(key=mySort)
     print(file_names)
     i = 1
+    '''
+    instances_folder = os.path.join(project_folder, 'instances')
 
-    for file_name in file_names:
+    for i in range(args.start, args.end + 1):
         print('=' * 20)
         print(f'Instance {i}')
 
-        with open(os.path.join(project_folder, 'instances', file_name)) as f:
+        with open(os.path.join(instances_folder, f'ins-{i}.txt')) as f:
             lines = f.readlines()
 
         lines = [l.strip('\n') for l in lines]

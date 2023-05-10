@@ -10,7 +10,6 @@ from matplotlib.patches import Rectangle
 from minizinc import Instance, Model, Solver
 from minizinc.result import Status
 
-
 #Plot colour map with rectangles:
 def plot_board(width, height, blocks, instance, rotated, show_plot=False, show_axis=False):
 
@@ -42,9 +41,11 @@ def plot_board(width, height, blocks, instance, rotated, show_plot=False, show_a
         ax.set_xticks([])
         ax.set_yticks([])
 
-    plt.savefig(f'../../CP/out/fig-ins-{instance}.png')
+    figure_folder = os.path.join(project_folder, "CP", "out", "images", f"ins-{instance}.png")
+    plt.savefig(figure_folder)
+    print(f"figure ins-{instance}.png has been correctly saved at path '{figure_folder}'")
 
-    #to whow plot:
+    #to show plot:
     if show_plot:
         plt.show(block=False)
         plt.pause(1)
@@ -54,25 +55,39 @@ def plot_board(width, height, blocks, instance, rotated, show_plot=False, show_a
 #get runtimes:
 def get_runtimes():
 
-    #create path if doesn't exists:
-    if not os.path.exists('../../runtimes'):
-        os.mkdir('../../runtimes')
+    #create runtime folder if doesn't exists:
+    runtimes_folder = os.path.join(project_folder, 'runtimes')
 
-    name = f'../../runtimes/CP-{args.solver}' \
-           f'{"-sb" if args.symmetry_breaking else ""}' \
-           f'{"-rot" if args.rotation else ""}' \
+    if not os.path.exists(runtimes_folder):
+        os.mkdir(runtimes_folder)
+        print("Runtimes folder has been created correctly")
+
+    s = f'CP-{args.solver}' \
+           "-sb" if args.symmetry_breaking else "" \
+           "-rot" if args.rotation else "" \
            f'-heu{args.heu}-restart{args.restart}.json'
 
-    if os.path.isfile(name):
-        with open(name) as f:
+    file_name = os.path.join(runtimes_folder, s)
+
+    if os.path.isfile(file_name):
+        with open(file_name) as f:
             data = {int(k): v for k, v in json.load(f).items()}
     else:
         data = {}
 
-    return data, name
-
+    return data, file_name
 
 if __name__ == "__main__":
+
+    #define outputs folder structure if not already created:
+    project_folder = os.path.abspath(os.path.join(os.getcwd(), "..", ".."))
+    outputs_folder = os.path.join(project_folder, 'CP', 'out')
+
+    if not os.path.exists(outputs_folder):
+        os.mkdir(outputs_folder)
+        os.mkdir(os.path.join(outputs_folder, 'images'))
+        os.mkdir(os.path.join(outputs_folder, 'texts'))
+        print("Folders '../CP/out/images' and '../CP/out/texts' have been created correctly")
 
     #define command line arguments:
     parser = ArgumentParser()
@@ -111,15 +126,13 @@ if __name__ == "__main__":
     model = Model(f"vlsi{mod}.mzn")
     solver = Solver.lookup(f'{args.solver}')
 
-    #creates output folder if it doesn't exist:
-    if not os.path.exists(f'../out'):
-        os.mkdir(f'../out')
-
     #get runtimes:
     runtimes, runtimes_filename = get_runtimes()
 
     #solve Instances in range:
     print(f'SOLVING INSTANCES {args.start} - {args.end} USING CP MODEL')
+
+    instances_folder = os.path.join(project_folder, 'instances')
 
     for i in range(args.start, args.end + 1):
         print('=' * 20)
@@ -128,7 +141,7 @@ if __name__ == "__main__":
         #create instance of the model and define solver to use:
         instance = Instance(solver, model)
 
-        with open(f'../../instances/ins-{i}.txt') as f:
+        with open(os.path.join(instances_folder, f'ins-{i}.txt')) as f:
             lines = f.readlines()
 
         #get list of lines:
@@ -185,8 +198,10 @@ if __name__ == "__main__":
                                                               res['y'] if args.rotation else instance['y'],
                                                               res['xhat'], res['yhat'])])
 
-            with open(f'../../CP/out/out-{i}.txt', 'w') as f:
+
+            with open(os.path.join(outputs_folder, 'texts', f'out-{i}.txt'), 'w') as f:
                 f.write(out)
+
             print('Instance solved')
             print(f'Solution status: {res.status}')
             print(f'h = {res.objective}')
@@ -197,9 +212,10 @@ if __name__ == "__main__":
                         for xi, yi, xhati, yhati in zip(res['x'] if args.rotation else instance['x'],
                                                         res['y'] if args.rotation else instance['y'],
                                                         res['xhat'], res['yhat'])]
+
             plot_board(instance['w'], res.objective, solution, i, res['rotated'] if args.rotation else None)
 
-            # total runtime in seconds
+            #total runtime in seconds
             runtimes[i] = (res.statistics['time'].microseconds / (10 ** 6)) + res.statistics['time'].seconds
 
         else:
