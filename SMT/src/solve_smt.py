@@ -27,9 +27,9 @@ def get_runtimes(args):
         os.mkdir(runtimes_folder)
         print("Runtimes folder has been created correctly")
 
-    s = 'SMT'\
-        '-sb' if args.symmetry_breaking else ''\
-        '-rot' if args.rotation else ''\
+    s = f"SMT"\
+        f'{"-sb" if args.symmetry_breaking else ""}'\
+        f'{"-rot" if args.rotation else ""}'\
         '.json'
 
     file_name = os.path.join(runtimes_folder, s)
