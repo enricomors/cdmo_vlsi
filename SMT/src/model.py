@@ -137,7 +137,7 @@ def solve_instance(instance, index, args):
     opt.add(cumulative_z3(y, heights, widths, w))
 
     # Largest circuit in the origin
-    opt.add(And(x[big_circuit_idx] == 0, y[big_circuit_idx] == 0))
+    #opt.add(And(x[big_circuit_idx] == 0, y[big_circuit_idx] == 0)) #con largest in the origin va meglio in termini di velocità
 
     #SYM BREAK
     if True:#args.symmetry_breaking:

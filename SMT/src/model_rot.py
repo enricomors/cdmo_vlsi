@@ -13,6 +13,9 @@ import multiprocessing
 import numpy as np
 
 
+
+
+
 def solve_instance_rot(instance, index, args):
     def max_z3(vars):
         maximum = vars[0]
@@ -25,6 +28,10 @@ def solve_instance_rot(instance, index, args):
         for v in vars[1:]:
             min = If(v < min, v, min)
         return min
+
+    def real_dim(dim, dim_swap, rot, n):
+        res = [If(rot[i], dim_swap[i], dim[i]) for i in range(n)]
+        return res
 
     def cumulative_z3(start, duration, resources, total):
         c = []
@@ -47,6 +54,8 @@ def solve_instance_rot(instance, index, args):
     # variables
     x = IntVector('x', n)
     y = IntVector('y', n)
+
+    # array of booleans, each one telling if the corresponding chip is rotated or not
     rotation_c = BoolVector('r', n)
 
     # plate_height = max_z3([y[i] + heights[i] for i in range(n)])
@@ -60,7 +69,7 @@ def solve_instance_rot(instance, index, args):
                                  for i in range(n)])
 
     # array of booleans, each one telling if the corresponding chip is rotated or not
-
+    rotation_c = BoolVector('r', n)
     opt = Optimize()
 
     # Handle rotation
@@ -81,8 +90,8 @@ def solve_instance_rot(instance, index, args):
     for i in range(n):
 
         # X and Y bounds
-        opt.add(And(x[i] >= 0, x[i] <= w - min_z3(widths)))
-        opt.add(And(y[i] >= 0, y[i] <= max_height - min_z3(heights)))
+        opt.add(And(x[i] >= 0, x[i] <= w - min_z3(real_dim(widths, heights, rotation_c, n))))
+        opt.add(And(y[i] >= 0, y[i] <= max_height - min_z3(real_dim(heights, widths, rotation_c, n))))
 
         # Main constraints
         opt.add(x[i] + If(rotation_c[i], heights[i], widths[i]) <= w)
@@ -95,7 +104,7 @@ def solve_instance_rot(instance, index, args):
         opt.add(Implies(Or(widths[i] > max_height, heights[i] > w), Not(rotation_c[i])))
 
         for j in range(i + 1, n):
-            # Non overlaping constraints
+            # Non overlapping constraints
             opt.add(Or(x[i] + If(rotation_c[i], heights[i], widths[i]) <= x[j],
                        x[j] + If(rotation_c[j], heights[j], widths[j]) <= x[i],
                        y[i] + If(rotation_c[i], widths[i], heights[i]) <= y[j],
@@ -105,7 +114,7 @@ def solve_instance_rot(instance, index, args):
             opt.add(Implies(And(heights[i] == heights[j], widths[i] == widths[j]),
                             And(x[i] <= x[j], Implies(x[i] == x[j], y[i] < y[j]))))
 
-    # Adding comulative constraints
+    # Adding cumulative constraints
     # opt.add(cumulative_z3(x, widths, heights, plate_height))
     opt.add(cumulative_z3(y,
                           [If(rotation_c[i], widths[i], heights[i]) for i in range(n)],
@@ -113,9 +122,10 @@ def solve_instance_rot(instance, index, args):
                           w))
 
     # Largest circuit in the origin
-    # opt.add(And(x[big_circuit_idx] == 0, y[big_circuit_idx] == 0))
+    opt.add(And(x[big_circuit_idx] == 0, y[big_circuit_idx] == 0))
 
     # SYM BREAK
+
     if True:  # args.symmetry_breaking:
         # find the indexes of the 2 largest pieces
         circuits_area = [widths[i] * heights[i] for i in range(n)]
