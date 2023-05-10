@@ -10,7 +10,7 @@ from matplotlib.patches import Rectangle
 from minizinc import Instance, Model, Solver
 from minizinc.result import Status
 
-
+import numbers
 #Plot colour map with rectangles:
 def plot_board(width, height, blocks, instance, rotated, show_plot=False, show_axis=False):
 
