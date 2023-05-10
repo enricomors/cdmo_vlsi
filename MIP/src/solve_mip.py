@@ -16,8 +16,11 @@ from mip_rotation import mip_rotation
 
 
 def get_runtimes(arguments):
+
+
     if not os.path.exists('../../runtimes'):
         os.mkdir('../../runtimes')
+
     name = f'../../runtimes/MIP' \
            f'{"-sb" if arguments.symmetry_breaking else ""}' \
            f'{"-rot" if arguments.rotation else ""}' \
