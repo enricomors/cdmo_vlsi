@@ -30,13 +30,17 @@ if not os.path.exists(os.path.join(project_folder, 'SMT', 'out')):
 
     print("Output folders have been created correctly")
 
+def mySort(e):
+    return int(e[4:-4])
+
+
 #get runtimes
 def get_runtimes(args):
 
-    s = 'SMT'\
-        '-sb' if args.symmetry_breaking else ''\
-        '-rot' if args.rotation else ''\
-        '.json'
+    s = f'SMT'\
+        f'{"-sb" if args.symmetry_breaking else ""}'\
+        f'{"-rot" if args.rotation else ""}'\
+        f'{".json"}'
 
     file_name = os.path.join(runtimes_folder, s)
     print(file_name)
@@ -48,14 +52,16 @@ def get_runtimes(args):
 
     return data, file_name
 
-
+'''
 def plot_board(width, height, blocks, index, show_plot=False, show_axis=False):
     cmap = plt.cm.get_cmap('jet', len(blocks))
     fig, ax = plt.subplots(figsize=(10, 10))
     for component, (w, h, x, y) in enumerate(blocks):
         label = f'{w}x{h}, ({x},{y})'
+       
         if rotation is not None:
            label += f', R={1 if rotation[component] else 0}'
+
         ax.add_patch(Rectangle((x, y), w, h, facecolor=cmap(component), edgecolor='k', label=label, lw=2, alpha=0.8))
     ax.set_ylim(0, height)
     ax.set_xlim(0, width)
@@ -66,12 +72,13 @@ def plot_board(width, height, blocks, index, show_plot=False, show_axis=False):
     if not show_axis:
         ax.set_xticks([])
         ax.set_yticks([])
-    plt.savefig(os.path.join(project_folder, "SMT", "out", "images", f"fig-ins-{index}.png"))
+
+    plt.savefig(os.path.join(project_folder, "out", "images", f"fig-ins-{index}.png"))
     if show_plot:
         plt.show(block=False)
         plt.pause(1)
     plt.close(fig)
-
+'''
 
 # Try to solve instance before timeout
 def start_solving(instance, runtimes, index, args):
@@ -118,7 +125,8 @@ if __name__ == "__main__":
     print(runtimes_filename)
     # Solve Instances in range
     file_names = os.listdir(os.path.join(project_folder, 'instances'))
-    #print(file_names)
+    file_names.sort(key=mySort)
+    print(file_names)
     i = 1
 
     for file_name in file_names:
