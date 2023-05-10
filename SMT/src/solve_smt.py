@@ -13,9 +13,26 @@ import numpy as np
 from model import solve_instance
 from model_rot import solve_instance_rot
 
+def create_output_folders():
+    # root folders:
+    project_folder = os.path.abspath(os.path.join(os.getcwd(), "..", ".."))
+    outputs_folder = os.path.join(project_folder, 'SMT', 'out')
 
-def mySort(e):
-    return int(e[4:-4])
+    # check if folder already exists
+    if not os.path.exists(outputs_folder):
+        os.mkdir(outputs_folder)
+
+        # outputs without considering rotations:
+        os.mkdir(os.path.join(outputs_folder, 'base'))
+        os.mkdir(os.path.join(outputs_folder, 'base', 'images'))  # CP/out/base/images
+        os.mkdir(os.path.join(outputs_folder, 'base', 'texts'))  # CP/out/base/texts
+
+        # outputs considering rotations:
+        os.mkdir(os.path.join(outputs_folder, 'rotation'))
+        os.mkdir(os.path.join(outputs_folder, 'rotation', 'images'))  # CP/out/rotation/images
+        os.mkdir(os.path.join(outputs_folder, 'rotation', 'texts'))  # CP/out/rotation/texts
+
+        print("Output folders have been created correctly!")
 
 #get runtimes
 def get_runtimes(args):
@@ -107,15 +124,8 @@ def start_solving(instance, runtimes, index, args):
 
 if __name__ == "__main__":
 
-    #define outputs folder structure if not already created:
-    project_folder = os.path.abspath(os.path.join(os.getcwd(), "..", ".."))
-    outputs_folder = os.path.join(project_folder, 'SMT', 'out')
-
-    if not os.path.exists(outputs_folder):
-        os.mkdir(outputs_folder)
-        os.mkdir(os.path.join(outputs_folder, 'images'))
-        os.mkdir(os.path.join(outputs_folder, 'texts'))
-        print("Folders '../SMT/out/images' and '../SMT/out/texts' have been created correctly")
+    # create output folders structure
+    create_output_folders()
 
     parser = ArgumentParser()
     parser.add_argument('-s', '--start', type=int, help='First instance to solve', default=1)
@@ -125,7 +135,6 @@ if __name__ == "__main__":
     parser.add_argument('-sb', '--symmetry_breaking', action="store_true", help="enables symmetry breaking")
 
     args = parser.parse_args()
-
 
     runtimes, runtimes_filename = get_runtimes(args)
     '''

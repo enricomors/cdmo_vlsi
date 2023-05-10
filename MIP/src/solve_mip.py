@@ -14,23 +14,49 @@ from mip_base import mip_base
 from mip_rotation import mip_rotation
 
 
+def create_output_folders():
+    # root folders:
+    project_folder = os.path.abspath(os.path.join(os.getcwd(), "..", ".."))
+    outputs_folder = os.path.join(project_folder, 'MIP', 'out')
+
+    # check if folder already exists
+    if not os.path.exists(outputs_folder):
+        os.mkdir(outputs_folder)
+
+        # outputs without considering rotations:
+        os.mkdir(os.path.join(outputs_folder, 'base'))
+        os.mkdir(os.path.join(outputs_folder, 'base', 'images'))  # CP/out/base/images
+        os.mkdir(os.path.join(outputs_folder, 'base', 'texts'))  # CP/out/base/texts
+
+        # outputs considering rotations:
+        os.mkdir(os.path.join(outputs_folder, 'rotation'))
+        os.mkdir(os.path.join(outputs_folder, 'rotation', 'images'))  # CP/out/rotation/images
+        os.mkdir(os.path.join(outputs_folder, 'rotation', 'texts'))  # CP/out/rotation/texts
+
+        print("Output folders have been created correctly!")
 
 def get_runtimes(arguments):
 
+    # create runtime folder if doesn't exists:
+    runtimes_folder = os.path.join(project_folder, 'runtimes')
 
-    if not os.path.exists('../../runtimes'):
-        os.mkdir('../../runtimes')
+    if not os.path.exists(runtimes_folder):
+        os.mkdir(runtimes_folder)
+        print("Runtimes folder has been created correctly")
 
-    name = f'../../runtimes/MIP' \
-           f'{"-sb" if arguments.symmetry_breaking else ""}' \
-           f'{"-rot" if arguments.rotation else ""}' \
-           f'.json'
-    if os.path.isfile(name):  # z3 I hate your timeout bug so much
-        with open(name) as f:
+    s = 'MIP'\
+        f'{"-sb" if arguments.symmetry_breaking else ""}' \
+        f'{"-rot" if arguments.rotation else ""}' \
+        f'.json'
+
+    file_name = os.path.join(runtimes_folder, s)
+
+    if os.path.isfile(file_name):  # z3 I hate your timeout bug so much
+        with open(file_name) as f:
             data = {int(k): v for k, v in json.load(f).items()}
     else:
         data = {}
-    return data, name
+    return data, file_name
 
 
 def plot_board(width, height, blocks, i, show_plot=False, show_axis=False):
@@ -50,7 +76,11 @@ def plot_board(width, height, blocks, i, show_plot=False, show_axis=False):
     if not show_axis:
         ax.set_xticks([])
         ax.set_yticks([])
-    plt.savefig(f'../../MIP/out/fig-ins-{i}.png')
+
+    figure_folder = os.path.join(project_folder, "MIP", "out", "images", f"ins-{instance}.png")
+    plt.savefig(figure_folder)
+    print(f"figure ins-{instance}.png has been correctly saved at path '{figure_folder}'")
+
     if show_plot:
         plt.show(block=False)
         plt.pause(1)
@@ -182,10 +212,15 @@ def start_solving(instance, runtimes, index, args):
     runtimes[index] = elapsed_time
     with open(runtimes_filename, 'w') as f:
         json.dump(runtimes, f)
+
     print(f"Time elapsed: {elapsed_time:.2f}")
 
 
 if __name__ == "__main__":
+
+    # create output folders structure
+    create_output_folders()
+
     parser = ArgumentParser()
     parser.add_argument('-s', '--start', type=int, help='First instance to solve', default=1)
     parser.add_argument('-e', '--end', type=int, help='Last instance to solve', default=40)
@@ -195,18 +230,18 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    # Creates output folder
-    if not os.path.exists(f'../../MIP/out'):
-        os.mkdir(f'../../MIP/out')
-
     runtimes, runtimes_filename = get_runtimes(args)
+
+    instances_folder = os.path.join(project_folder, 'instances')
 
     # Solve Instances in range
     for i in range(args.start, args.end + 1):
         print('=' * 20)
         print(f'Instance {i}')
-        with open(f'../../instances/ins-{i}.txt') as f:
+
+        with open(os.path.join(instances_folder, f'ins-{i}.txt')) as f:
             lines = f.readlines()
+
         lines = [l.strip('\n') for l in lines]
         w = int(lines[0].strip('\n'))
         n = int(lines[1].strip('\n'))

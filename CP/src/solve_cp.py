@@ -1,5 +1,4 @@
 #imports:
-
 import os
 import json
 from argparse import ArgumentParser
@@ -10,7 +9,54 @@ from matplotlib.patches import Rectangle
 from minizinc import Instance, Model, Solver
 from minizinc.result import Status
 
-import numbers
+#create output folders if not already created:
+def create_output_folders():
+
+    #root folders:
+    project_folder = os.path.abspath(os.path.join(os.getcwd(), "..", ".."))
+    outputs_folder = os.path.join(project_folder, 'CP', 'out')
+
+    #check if folder already exists
+    if not os.path.exists(outputs_folder):
+        os.mkdir(outputs_folder)
+
+        #outputs without considering rotations:
+        os.mkdir(os.path.join(outputs_folder, 'base'))
+        os.mkdir(os.path.join(outputs_folder, 'base', 'images'))        #CP/out/base/images
+        os.mkdir(os.path.join(outputs_folder, 'base', 'texts'))         #CP/out/base/texts
+
+        #outputs considering rotations:
+        os.mkdir(os.path.join(outputs_folder, 'rotation'))
+        os.mkdir(os.path.join(outputs_folder, 'rotation', 'images'))    #CP/out/rotation/images
+        os.mkdir(os.path.join(outputs_folder, 'rotation', 'texts'))     #CP/out/rotation/texts
+
+        print("Output folders have been created correctly!")
+
+#get runtimes:
+def get_runtimes():
+
+    #create runtime folder if doesn't exists:
+    runtimes_folder = os.path.join(project_folder, 'runtimes')
+
+    if not os.path.exists(runtimes_folder):
+        os.mkdir(runtimes_folder)
+        print("Runtimes folder has been created correctly!")
+
+    s = f'CP-{args.solver}' \
+           "-sb" if args.symmetry_breaking else "" \
+           "-rot" if args.rotation else "" \
+           f'-heu{args.heu}-restart{args.restart}.json'
+
+    file_name = os.path.join(runtimes_folder, s)
+
+    if os.path.isfile(file_name):
+        with open(file_name) as f:
+            data = {int(k): v for k, v in json.load(f).items()}
+    else:
+        data = {}
+
+    return data, file_name
+
 #Plot colour map with rectangles:
 def plot_board(width, height, blocks, instance, rotated, show_plot=False, show_axis=False):
 
@@ -52,43 +98,10 @@ def plot_board(width, height, blocks, instance, rotated, show_plot=False, show_a
         plt.pause(1)
     plt.close(fig)
 
-
-#get runtimes:
-def get_runtimes():
-
-    #create runtime folder if doesn't exists:
-    runtimes_folder = os.path.join(project_folder, 'runtimes')
-
-    if not os.path.exists(runtimes_folder):
-        os.mkdir(runtimes_folder)
-        print("Runtimes folder has been created correctly")
-
-    s = f'CP-{args.solver}' \
-           "-sb" if args.symmetry_breaking else "" \
-           "-rot" if args.rotation else "" \
-           f'-heu{args.heu}-restart{args.restart}.json'
-
-    file_name = os.path.join(runtimes_folder, s)
-
-    if os.path.isfile(file_name):
-        with open(file_name) as f:
-            data = {int(k): v for k, v in json.load(f).items()}
-    else:
-        data = {}
-
-    return data, file_name
-
 if __name__ == "__main__":
 
-    #define outputs folder structure if not already created:
-    project_folder = os.path.abspath(os.path.join(os.getcwd(), "..", ".."))
-    outputs_folder = os.path.join(project_folder, 'CP', 'out')
-
-    if not os.path.exists(outputs_folder):
-        os.mkdir(outputs_folder)
-        os.mkdir(os.path.join(outputs_folder, 'images'))
-        os.mkdir(os.path.join(outputs_folder, 'texts'))
-        print("Folders '../CP/out/images' and '../CP/out/texts' have been created correctly")
+    #create output folders structure
+    create_output_folders()
 
     #define command line arguments:
     parser = ArgumentParser()
@@ -126,10 +139,6 @@ if __name__ == "__main__":
 
     model = Model(f"vlsi{mod}.mzn")
     solver = Solver.lookup(f'{args.solver}')
-
-    #creates output folder if it doesn't exist:
-    if not os.path.exists(f'../out'):
-        os.mkdir(f'../out')
 
     #get runtimes:
     runtimes, runtimes_filename = get_runtimes()

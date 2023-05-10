@@ -12,6 +12,7 @@ import multiprocessing
 
 import numpy as np
 
+project_folder = os.path.abspath(os.path.join(os.getcwd(), "..", ".."))
 
 def plot_board(width, height, blocks, index, show_plot=False, show_axis=False):
     cmap = plt.cm.get_cmap('jet', len(blocks))
@@ -30,7 +31,12 @@ def plot_board(width, height, blocks, index, show_plot=False, show_axis=False):
     if not show_axis:
         ax.set_xticks([])
         ax.set_yticks([])
-    plt.savefig(f'../../SAT/out/fig-ins-{index}.png')
+
+
+    figure_folder = os.path.join(project_folder, "SAT", "out", "images", f"ins-{index}.png")
+    plt.savefig(figure_folder)
+    print(f"figure ins-{index}.png has been correctly saved at path '{figure_folder}'")
+
     if show_plot:
         plt.show(block=False)
         plt.pause(1)
@@ -122,9 +128,15 @@ def order_enc(instance, index, args):
     # domain reducing constraints of px and py
     for i in range(n):
         for e in range(w - x[i], w):
-            s.add(px[i][e])
-        for f in range(maxh - y[i], maxh):
-            s.add(py[i][f])
+            figure_folder = os.path.join(project_folder, "SAT", "out", "images", f"ins-{instance}.png")
+
+    plt.savefig(figure_folder)
+
+    print(f"figure ins-{instance}.png has been correctly saved at path '{figure_folder}'")
+
+    s.add(px[i][e])
+    for f in range(maxh - y[i], maxh):
+        s.add(py[i][f])
 
     # Symmetry breaking constraints
     if args.symmetry_breaking:
