@@ -103,8 +103,8 @@ def plot_board(width, height, blocks, instance, rotated, show_plot=False, show_a
         ax.set_xticks([])
         ax.set_yticks([])
 
-    # save colormap in .png format at given path:
-    figure_path = os.path.join(outputs_folder, "images", f"ins-{instance}.png")
+    # save colormap in .png format at given path (checking if using rotation or not):
+    figure_path = os.path.join(outputs_folder, 'rotation' if args.rotation else 'base', "images", f"ins-{instance}.png")
     plt.savefig(figure_path)
 
     # check if file was saved at correct path:
@@ -233,8 +233,8 @@ if __name__ == "__main__":
                                                               res['y'] if args.rotation else instance['y'],
                                                               res['xhat'], res['yhat'])])
 
-
-            with open(os.path.join(outputs_folder, 'texts', f'out-{i}.txt'), 'w') as f:
+            # open output directory either for base model or rotation model
+            with open(os.path.join(outputs_folder, 'rotation' if args.rotation else 'base', 'texts', f'out-{i}.txt'), 'w') as f:
                 f.write(out)
 
             print('Instance solved')

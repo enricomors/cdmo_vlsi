@@ -23,3 +23,10 @@ Command line arguments:
 | `--solver SOLVER`                                | CP solver to use (gecode/chuffed, default: chuffed)                          |
 | `--heu HEU`                                      | CP search heuristic (input_order/first_fail/dom_w_deg, default: input_order) |
 | `--restart RESTART`                              | CP restart strategy (none/lub/geom), default: none)                          |
+
+### Results
+
+Here's the link to a spreadsheet with results of various experiments, made up combining different hyperparameters 
+(solver, use of symmetry breaking, rotations, restart, search heuristic, VOHs)
+
+https://docs.google.com/spreadsheets/d/1oityTs147Fbq10D1cxfhFs7Oad5r_t9sa16O9LzCKjY/edit#gid=0
