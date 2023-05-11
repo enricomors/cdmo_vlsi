@@ -22,7 +22,7 @@ def plot_board(width, height, blocks, i, show_plot=False, show_axis=False):
     if not show_axis:
         ax.set_xticks([])
         ax.set_yticks([])
-    plt.savefig(f'../../MIP/out/fig-ins-{i}.png')
+    plt.savefig(f'../../MIP/out/base/images/fig-ins-{i}.png')
     if show_plot:
         plt.show(block=False)
         plt.pause(1)
@@ -115,7 +115,7 @@ def mip_base(instance, index, args):
                           for xi, yi, xhati, yhati in zip(instance['inputx'], instance['inputy'],
                                                           instance['xhat'], instance['yhat'])])
 
-        with open(f'../../MIP/out/out-{index}.txt', 'w') as f:
+        with open(f'../../MIP/out/base/texts/out-{index}.txt', 'w') as f:
             f.write(out)
 
         res = [(xi, yi, xhati, yhati)

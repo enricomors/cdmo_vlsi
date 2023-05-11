@@ -22,7 +22,7 @@ def plot_board(width, height, blocks, i, show_plot=False, show_axis=False):
     if not show_axis:
         ax.set_xticks([])
         ax.set_yticks([])
-    plt.savefig(f'../../MIP/out/fig-ins-{i}.png')
+    plt.savefig(f'../../MIP/out/rotation/fig-ins-{i}.png')
     if show_plot:
         plt.show(block=False)
         plt.pause(1)
@@ -123,7 +123,7 @@ def mip_rotation(instance, index, args):
         out += '\n'.join([f"{xi} {yi} {xhati} {yhati}"
                           for xi, yi, xhati, yhati in zip(x, y, instance['xhat'], instance['yhat'])])
 
-        with open(f'../../MIP/out/out-{index}.txt', 'w') as f:
+        with open(f'../../MIP/out/rotation/texts/out-{index}.txt', 'w') as f:
             f.write(out)
 
         res = [(xi, yi, xhati, yhati)

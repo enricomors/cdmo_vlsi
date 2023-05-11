@@ -33,23 +33,25 @@ def create_folder_structure():
 
         print("Output folders have been created correctly!")
 
-    # check if runtimes folder already exists:
+    #check if runtimes folder already exists:
     runtimes_folder = os.path.join(project_folder, 'runtimes')
 
     if not os.path.exists(runtimes_folder):
         os.mkdir(runtimes_folder)  # cdmo_vlsi/runtimes
         print("Runtimes folder has been created correctly!")
 
-    return project_folder, outputs_folder, runtimes_folder
+    #instance folder:
+    instances_folder = os.path.join(project_folder, 'instances')
 
+    return project_folder, outputs_folder, runtimes_folder, instances_folder
 
-# get runtimes:
-def get_runtimes():
+#get runtimes:
+def get_runtimes(args):
     # define path and name of runtime file:
     file_name = f'CP-{args.solver}' \
                 "-sb" if args.symmetry_breaking else "" \
-                                                     "-rot" if args.rotation else "" \
-                                                                                  f'-heu{args.heu}-restart{args.restart}.json'
+                "-rot" if args.rotation else "" \
+                f'-heu{args.heu}-restart{args.restart}.json'
 
     file_path = os.path.join(runtimes_folder, file_name)
 
@@ -57,7 +59,7 @@ def get_runtimes():
     if os.path.isfile(file_path):
         with open(file_path) as f:
 
-            # load dictionary:
+            #load dictionary:
             dictionary = json.load(f)
 
             #############PERCHE' COPIO UN DIZIONARIO GIA FATTO IN UN DIZIONARIO NUOVO? Forse sono perché le 'keys' k andrebbero convertite tutte a int?
@@ -73,11 +75,13 @@ def get_runtimes():
     return data, file_path
 
 
-# Creates and plots the colour map with rectangles:
+# creates and plots the colour map with rectangles:
 def plot_board(width, height, blocks, instance, rotated, show_plot=False, show_axis=False, verbose=False):
-    # define pyplot colour map of len(blocks) number of colours :
+
+    # define pyplot colour map of len(blocks) number of colours:
     cmap = plt.cm.get_cmap('jet', len(blocks))
 
+    # define figure size:
     fig, ax = plt.subplots(figsize=(10, 10))
 
     # add each rectangle block in the colour map:
@@ -121,33 +125,37 @@ def plot_board(width, height, blocks, instance, rotated, show_plot=False, show_a
 #******* Main Code *******
 if __name__ == "__main__":
 
-    #create output folders structure
-    project_folder, outputs_folder, runtimes_folder = create_folder_structure()
+    #create folders structure:
+    project_folder, outputs_folder, runtimes_folder , instances_folder = create_folder_structure()
 
     #define command line arguments:
     parser = ArgumentParser()
-    # parser.add_argument('technology', type=str, help='The technology to use (CP, SAT or SMT)')
+
+    # parser.add_argument('technology', type=str, help='The technology to use (CP, SAT or SMT)')          ***********CAPIRE SE QUESTA RIGA VA TOLTAAA
     parser.add_argument('-s', '--start', type=int, help='First instance to solve', default=1)
     parser.add_argument('-e', '--end', type=int, help='Last instance to solve', default=40)
     parser.add_argument('-t', '--timeout', type=int, help='Timeout (ms)', default=300000)
     parser.add_argument('-r', '--rotation', action="store_true", help="enables circuits rotation")
     parser.add_argument('-sb', '--symmetry_breaking', action="store_true", help="enables symmetry breaking")
     parser.add_argument('--solver', type=str, help='CP solver (default: chuffed)', default='chuffed')
-    parser.add_argument('--heu', type=str, help='CP search heuristic (default: input_order, min)',
-                        default='input_order')
+    parser.add_argument('--heu', type=str, help='CP search heuristic (default: input_order, min)', default='input_order')
     parser.add_argument('--restart', type=str, help='CP restart strategy (default: none)', default='none')
 
     args = parser.parse_args()
 
-    #checks for argument errors:
+    #check for argument errors
+    #solver:
     if args.solver not in ('gecode', 'chuffed'):
-        raise ValueError(f'wrong solver {args.solver}; supported ones are gecode and chuffed')
+        raise ValueError(f'wrong solver {args.solver};\nsupported ones are gecode and chuffed')
 
+    #heuristics:
     if args.heu not in ('input_order', 'first_fail', 'dom_w_deg'):
-        raise ValueError(f'wrong search heuristic {args.heu}; supported ones are input_order, first_fail and dom_w_deg')
+        raise ValueError(f'wrong search heuristic {args.heu};\nsupported ones are input_order, first_fail and dom_w_deg')
 
+
+    #restart strategies:
     if args.restart not in ('none', 'geom', 'luby'):
-        raise ValueError(f'wrong restart {args.restart}; supported ones are geom and luby')
+        raise ValueError(f'wrong restart {args.restart};\nsupported ones are geom and luby')
 
     #instantiate Model and Solver:
     mod = ''
@@ -162,20 +170,19 @@ if __name__ == "__main__":
     solver = Solver.lookup(f'{args.solver}')
 
     #get runtimes:
-    runtimes, runtimes_filename = get_runtimes() #########################QUI NON VA AGGIUNTO ARGS?
+    runtimes, runtimes_filepath = get_runtimes(args)
 
     #solve Instances in range:
-    print(f'SOLVING INSTANCES {args.start} - {args.end} USING CP MODEL')
-
-    instances_folder = os.path.join(project_folder, 'instances')
+    print(f'Solving instances {args.start} - {args.end} using CP model')
 
     for i in range(args.start, args.end + 1):
         print('=' * 20)
-        print(f'INSTANCE {i}')
+        print(f'Instance {i}')
 
         #create instance of the model and define solver to use:
         instance = Instance(solver, model)
 
+        #open instance and extract instance data:
         with open(os.path.join(instances_folder, f'ins-{i}.txt')) as f:
             lines = f.readlines()
 
@@ -193,16 +200,16 @@ if __name__ == "__main__":
 
         #get x and y coordinates:
         x, y = list(zip(*map(lambda x_y: (int(x_y[0]), int(x_y[1])), dim)))
-        xy = np.array([x, y]).T
 
-        # Sort circuits by area
+        #sort circuits by area:
+        xy = np.array([x, y]).T
         areas = np.prod(xy, axis=1)
         sorted_idx = np.argsort(areas)[::-1]
         xy = xy[sorted_idx]
         x = list(map(int, xy[:, 0]))
         y = list(map(int, xy[:, 1]))
 
-        # lower and upper bounds for height
+        #lower and upper bounds for height:
         min_area = np.prod(xy, axis=1).sum()
         minh = int(min_area / w)
         maxh = np.sum(y)
@@ -213,6 +220,7 @@ if __name__ == "__main__":
         if args.rotation:
             instance['inx'] = x
             instance['iny'] = y
+
         else:
             instance['x'] = x
             instance['y'] = y
@@ -223,7 +231,7 @@ if __name__ == "__main__":
         instance['search'] = args.heu
         instance['restart'] = args.restart
 
-        # Solve instance with timeout
+        #solve instance with timeout:
         res = instance.solve(timeout=timedelta(milliseconds=args.timeout))
 
         if res.status == Status.OPTIMAL_SOLUTION:
@@ -242,7 +250,7 @@ if __name__ == "__main__":
             print(f'h = {res.objective}')
             print(f'time: {res.statistics["time"]}')
 
-            # Plot the resulting board
+            #plot the resulting board:
             solution = [(xi, yi, xhati, yhati)
                         for xi, yi, xhati, yhati in zip(res['x'] if args.rotation else instance['x'],
                                                         res['y'] if args.rotation else instance['y'],
@@ -250,12 +258,13 @@ if __name__ == "__main__":
 
             plot_board(instance['w'], res.objective, solution, i, res['rotated'] if args.rotation else None)
 
-            #total runtime in seconds
+            #total runtime in seconds:
             runtimes[i] = (res.statistics['time'].microseconds / (10 ** 6)) + res.statistics['time'].seconds
 
         else:
             print('Not solved within timeout')
             runtimes[i] = 300
 
-        with open(runtimes_filename, 'w') as f:
+        #save runtimes
+        with open(runtimes_filepath, 'w') as f:
             json.dump(runtimes, f)

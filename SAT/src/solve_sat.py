@@ -102,36 +102,43 @@ def plot_board(width, height, blocks, index, show_plot=False, show_axis=False):
     plt.close(fig)
 '''
 
-# Try to solve instance before timeout
+#solve given instance:
 def start_solving(instance, runtimes, index, args):
     print("-" * 20)
     print(f'Solving Instance {index}')
 
+    #select model based on whether rotation is enabled or not:
     if args.rotation:
-        model = order_enc_rot  # use rotation model
+        model = order_enc_rot
     else:
-        model = order_enc  # use standard model
+        model = order_enc
 
+    #start a new process:
     p = multiprocessing.Process(target=model, args=(instance, index, args))
-
     p.start()
+
+    #start a timer to track the elapsed time:
     start_time = time.time()
+
+    #stop process if timeout exceeded:
     p.join(args.timeout)
 
-    # If thread is still active kill it
+    #kill thread if still active:
     if p.is_alive():
         print("Timeout Reached without finding a solution")
         p.kill()
         p.join()
 
-    # Save runtime to json
+    #save elapsed time within runtimes and save file:
     elapsed_time = time.time() - start_time
     runtimes[index] = elapsed_time
+
     with open(runtimes_filename, 'w') as f:
         json.dump(runtimes, f)
+
     print(f"Time elapsed: {elapsed_time:.2f}")
 
-
+#******* Main Code *******
 if __name__ == "__main__":
 
     # create output folders structure
