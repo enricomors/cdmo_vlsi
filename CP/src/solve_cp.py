@@ -9,73 +9,88 @@ from matplotlib.patches import Rectangle
 from minizinc import Instance, Model, Solver
 from minizinc.result import Status
 
-#create output folders if not already created:
-def create_output_folders():
+#******* User Defined Functions *******
 
-    #root folders:
+#create output folders if not already created:
+def create_folder_structure():
+    # root folders:
     project_folder = os.path.abspath(os.path.join(os.getcwd(), "..", ".."))
     outputs_folder = os.path.join(project_folder, 'CP', 'out')
 
-    #check if folder already exists
+    # check if output folder already exists:
     if not os.path.exists(outputs_folder):
         os.mkdir(outputs_folder)
 
-        #outputs without considering rotations:
+        # outputs without considering rotations:
         os.mkdir(os.path.join(outputs_folder, 'base'))
-        os.mkdir(os.path.join(outputs_folder, 'base', 'images'))        #CP/out/base/images
-        os.mkdir(os.path.join(outputs_folder, 'base', 'texts'))         #CP/out/base/texts
+        os.mkdir(os.path.join(outputs_folder, 'base', 'images'))  # cdmo_vlsi/CP/out/base/images
+        os.mkdir(os.path.join(outputs_folder, 'base', 'texts'))  # cdmo_vlsi/CP/out/base/texts
 
-        #outputs considering rotations:
+        # outputs considering rotations:
         os.mkdir(os.path.join(outputs_folder, 'rotation'))
-        os.mkdir(os.path.join(outputs_folder, 'rotation', 'images'))    #CP/out/rotation/images
-        os.mkdir(os.path.join(outputs_folder, 'rotation', 'texts'))     #CP/out/rotation/texts
+        os.mkdir(os.path.join(outputs_folder, 'rotation', 'images'))  # cdmo_vlsi/CP/out/rotation/images
+        os.mkdir(os.path.join(outputs_folder, 'rotation', 'texts'))  # cdmo_vlsi/CP/out/rotation/texts
 
         print("Output folders have been created correctly!")
 
-#get runtimes:
-def get_runtimes():
-
-    #create runtime folder if doesn't exists:
+    # check if runtimes folder already exists:
     runtimes_folder = os.path.join(project_folder, 'runtimes')
 
     if not os.path.exists(runtimes_folder):
-        os.mkdir(runtimes_folder)
+        os.mkdir(runtimes_folder)  # cdmo_vlsi/runtimes
         print("Runtimes folder has been created correctly!")
 
-    s = f'CP-{args.solver}' \
-           "-sb" if args.symmetry_breaking else "" \
-           "-rot" if args.rotation else "" \
-           f'-heu{args.heu}-restart{args.restart}.json'
+    return project_folder, outputs_folder, runtimes_folder
 
-    file_name = os.path.join(runtimes_folder, s)
 
-    if os.path.isfile(file_name):
-        with open(file_name) as f:
-            data = {int(k): v for k, v in json.load(f).items()}
+# get runtimes:
+def get_runtimes():
+    # define path and name of runtime file:
+    file_name = f'CP-{args.solver}' \
+                "-sb" if args.symmetry_breaking else "" \
+                                                     "-rot" if args.rotation else "" \
+                                                                                  f'-heu{args.heu}-restart{args.restart}.json'
+
+    file_path = os.path.join(runtimes_folder, file_name)
+
+    # if file exists load it and extract dict values, otherwise return empty dict:
+    if os.path.isfile(file_path):
+        with open(file_path) as f:
+
+            # load dictionary:
+            dictionary = json.load(f)
+
+            #############PERCHE' COPIO UN DIZIONARIO GIA FATTO IN UN DIZIONARIO NUOVO? Forse sono perché le 'keys' k andrebbero convertite tutte a int?
+            data = {}
+
+            for k, v in dictionary.items():
+                int_key = int(k)
+                data[int_key] = v
+
     else:
         data = {}
 
-    return data, file_name
+    return data, file_path
 
-#Plot colour map with rectangles:
-def plot_board(width, height, blocks, instance, rotated, show_plot=False, show_axis=False):
 
-    #define pyplot colour map:
+# Creates and plots the colour map with rectangles:
+def plot_board(width, height, blocks, instance, rotated, show_plot=False, show_axis=False, verbose=False):
+    # define pyplot colour map of len(blocks) number of colours :
     cmap = plt.cm.get_cmap('jet', len(blocks))
 
     fig, ax = plt.subplots(figsize=(10, 10))
 
-    #add each rectangle block in the colour map:
+    # add each rectangle block in the colour map:
     for component, (w, h, x, y) in enumerate(blocks):
         label = f'{w}x{h}, ({x},{y})'
 
-        #check if the rectangle is rotated:
+        # if the rectangle is rotated denote it in its label:
         if rotated is not None:
             label += f', R={1 if rotated[component] else 0}'
 
         ax.add_patch(Rectangle((x, y), w, h, facecolor=cmap(component), edgecolor='k', label=label, lw=2, alpha=0.8))
 
-    #set plot properties:
+    # set plot properties:
     ax.set_ylim(0, height)
     ax.set_xlim(0, width)
     ax.set_xlabel('width', fontsize=15)
@@ -83,25 +98,31 @@ def plot_board(width, height, blocks, instance, rotated, show_plot=False, show_a
     ax.legend()
     ax.set_title(f'Instance {instance}, size (WxH): {width}x{height}', fontsize=22)
 
-    #to print axis:
+    # print axis if wanted:
     if show_axis:
         ax.set_xticks([])
         ax.set_yticks([])
 
-    figure_folder = os.path.join(project_folder, "CP", "out", "images", f"ins-{instance}.png")
-    plt.savefig(figure_folder)
-    print(f"figure ins-{instance}.png has been correctly saved at path '{figure_folder}'")
+    # save colormap in .png format at given path:
+    figure_path = os.path.join(outputs_folder, "images", f"ins-{instance}.png")
+    plt.savefig(figure_path)
 
-    #to show plot:
+    # check if file was saved at correct path:
+    if verbose:
+        if os.path.exists(figure_path):
+            print(f"figure ins-{instance}.png has been correctly saved at path '{figure_path}'")
+
+    # to show plot:
     if show_plot:
         plt.show(block=False)
         plt.pause(1)
     plt.close(fig)
 
+#******* Main Code *******
 if __name__ == "__main__":
 
     #create output folders structure
-    create_output_folders()
+    project_folder, outputs_folder, runtimes_folder = create_folder_structure()
 
     #define command line arguments:
     parser = ArgumentParser()
@@ -141,7 +162,7 @@ if __name__ == "__main__":
     solver = Solver.lookup(f'{args.solver}')
 
     #get runtimes:
-    runtimes, runtimes_filename = get_runtimes()
+    runtimes, runtimes_filename = get_runtimes() #########################QUI NON VA AGGIUNTO ARGS?
 
     #solve Instances in range:
     print(f'SOLVING INSTANCES {args.start} - {args.end} USING CP MODEL')
