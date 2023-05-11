@@ -33,7 +33,7 @@ def plot_board(width, height, blocks, index, show_plot=False, show_axis=False):
         ax.set_yticks([])
 
 
-    figure_folder = os.path.join(project_folder, "SAT", "out", "images", f"ins-{index}.png")
+    figure_folder = os.path.join(project_folder, "SAT", "out", "base", "images", f"ins-{index}.png")
     plt.savefig(figure_folder)
     print(f"figure ins-{index}.png has been correctly saved at path '{figure_folder}'")
 
@@ -128,7 +128,7 @@ def order_enc(instance, index, args):
     # domain reducing constraints of px and py
     for i in range(n):
         for e in range(w - x[i], w):
-            figure_folder = os.path.join(project_folder, "SAT", "out", "images", f"ins-{instance}.png")
+            figure_folder = os.path.join(project_folder, "SAT", "out","base", "images", f"ins-{i}.png")
 
     plt.savefig(figure_folder)
 
@@ -213,7 +213,7 @@ def order_enc(instance, index, args):
                       for xi, yi, xhati, yhati in zip(instance['inputx'], instance['inputy'],
                                                       instance['xhat'], instance['yhat'])])
 
-    with open(f'../../SAT/out/out-{index}.txt', 'w') as f:
+    with open(f'../../SAT/out/base/texts/out-{index}.txt', 'w') as f:
         f.write(out)
 
     # plot solution

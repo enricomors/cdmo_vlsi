@@ -13,26 +13,36 @@ import numpy as np
 from model import solve_instance
 from model_rot import solve_instance_rot
 
-def create_output_folders():
+def create_folder_structure():
     # root folders:
     project_folder = os.path.abspath(os.path.join(os.getcwd(), "..", ".."))
     outputs_folder = os.path.join(project_folder, 'SMT', 'out')
 
-    # check if folder already exists
+    # check if output folder already exists:
     if not os.path.exists(outputs_folder):
         os.mkdir(outputs_folder)
 
         # outputs without considering rotations:
         os.mkdir(os.path.join(outputs_folder, 'base'))
-        os.mkdir(os.path.join(outputs_folder, 'base', 'images'))  # CP/out/base/images
-        os.mkdir(os.path.join(outputs_folder, 'base', 'texts'))  # CP/out/base/texts
+        os.mkdir(os.path.join(outputs_folder, 'base', 'images'))  # cdmo_vlsi/CP/out/base/images
+        os.mkdir(os.path.join(outputs_folder, 'base', 'texts'))  # cdmo_vlsi/CP/out/base/texts
 
         # outputs considering rotations:
         os.mkdir(os.path.join(outputs_folder, 'rotation'))
-        os.mkdir(os.path.join(outputs_folder, 'rotation', 'images'))  # CP/out/rotation/images
-        os.mkdir(os.path.join(outputs_folder, 'rotation', 'texts'))  # CP/out/rotation/texts
+        os.mkdir(os.path.join(outputs_folder, 'rotation', 'images'))  # cdmo_vlsi/CP/out/rotation/images
+        os.mkdir(os.path.join(outputs_folder, 'rotation', 'texts'))  # cdmo_vlsi/CP/out/rotation/texts
 
         print("Output folders have been created correctly!")
+
+    # check if runtimes folder already exists:
+    runtimes_folder = os.path.join(project_folder, 'runtimes')
+
+    if not os.path.exists(runtimes_folder):
+        os.mkdir(runtimes_folder)  # cdmo_vlsi/runtimes
+        print("Runtimes folder has been created correctly!")
+
+    return project_folder, outputs_folder, runtimes_folder
+
 
 #get runtimes
 def get_runtimes(args):
@@ -125,7 +135,7 @@ def start_solving(instance, runtimes, index, args):
 if __name__ == "__main__":
 
     # create output folders structure
-    create_output_folders()
+    project_folder, outputs_folder, runtimes_folder = create_folder_structure()
 
     parser = ArgumentParser()
     parser.add_argument('-s', '--start', type=int, help='First instance to solve', default=1)

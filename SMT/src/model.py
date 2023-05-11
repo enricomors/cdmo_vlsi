@@ -35,7 +35,7 @@ def solve_instance(instance, index, args):
             ax.set_xticks([])
             ax.set_yticks([])
 
-        plt.savefig(os.path.join(project_folder, "out", "images", f"fig-ins-{index}.png"))
+        plt.savefig(os.path.join(project_folder, "out","base", "images", f"fig-ins-{index}.png"))
         if show_plot:
             plt.show(block=False)
             plt.pause(1)
@@ -197,7 +197,7 @@ def solve_instance(instance, index, args):
         s = 'out'\
             f'{index}'\
             '.txt'
-        pathname = os.path.join(project_folder, 'out', 'texts', s)
+        pathname = os.path.join(project_folder, 'out', 'base', 'texts', s)
 
         with open(pathname, 'w') as f:
             f.write(out)
