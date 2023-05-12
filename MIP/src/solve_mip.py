@@ -1,3 +1,4 @@
+#imports
 import json
 import multiprocessing
 import os
@@ -27,13 +28,13 @@ def create_folder_structure():
 
         # outputs without considering rotations:
         os.mkdir(os.path.join(outputs_folder, 'base'))
-        os.mkdir(os.path.join(outputs_folder, 'base', 'images'))  # cdmo_vlsi/CP/out/base/images
-        os.mkdir(os.path.join(outputs_folder, 'base', 'texts'))  # cdmo_vlsi/CP/out/base/texts
+        os.mkdir(os.path.join(outputs_folder, 'base', 'images'))  # cdmo_vlsi/MIP/out/base/images
+        os.mkdir(os.path.join(outputs_folder, 'base', 'texts'))  # cdmo_vlsi/MIP/out/base/texts
 
         # outputs considering rotations:
         os.mkdir(os.path.join(outputs_folder, 'rotation'))
-        os.mkdir(os.path.join(outputs_folder, 'rotation', 'images'))  # cdmo_vlsi/CP/out/rotation/images
-        os.mkdir(os.path.join(outputs_folder, 'rotation', 'texts'))  # cdmo_vlsi/CP/out/rotation/texts
+        os.mkdir(os.path.join(outputs_folder, 'rotation', 'images'))  # cdmo_vlsi/MIP/out/rotation/images
+        os.mkdir(os.path.join(outputs_folder, 'rotation', 'texts'))  # cdmo_vlsi/MIP/out/rotation/texts
 
         print("Output folders have been created correctly!")
 
@@ -287,26 +288,26 @@ if __name__ == "__main__":
         print('=' * 20)
         print(f'Instance {i}')
 
-        #open instance and extract instance data:
+        # open instance and extract instance data:
         with open(os.path.join(instances_folder, f'ins-{i}.txt')) as f:
             lines = f.readlines()
 
-        #get list of lines:
+        # get list of lines:
         lines = [l.strip('\n') for l in lines]
 
-        #get width of the map:
+        # get width of the map:
         w = int(lines[0].strip('\n'))
 
-        #get number of blocks:
+        # get number of blocks:
         n = int(lines[1].strip('\n'))
 
-        #get list of the dimensions of each circuit:
+        # get list of the dimensions of each circuit:
         dim = [ln.split(' ') for ln in lines[2:]]
 
-        #get x and y coordinates:
+        # get x and y coordinates:
         x, y = list(zip(*map(lambda x_y: (int(x_y[0]), int(x_y[1])), dim)))
 
-        #sort circuits by area:
+        # sort circuits by area:
         xy = np.array([x, y]).T
         areas = np.prod(xy, axis=1)
         sorted_idx = np.argsort(areas)[::-1]
@@ -314,13 +315,13 @@ if __name__ == "__main__":
         x = list(map(int, xy[:, 0]))
         y = list(map(int, xy[:, 1]))
 
-        #lower and upper bounds for height:
+        # lower and upper bounds for height:
         min_area = np.prod(xy, axis=1).sum()
         minh = int(min_area / w)
         maxh = np.sum(y)
 
-        #pass instance parameters to the solver:
+        # pass instance parameters to the solver:
         instance = {"w": w, 'n': n, 'inputx': x, 'inputy': y, 'minh': minh, 'maxh': maxh}
 
-        #begin to find solution:
+        # begin to find solution:
         start_solving(instance, runtimes, i, args)

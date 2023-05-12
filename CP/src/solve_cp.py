@@ -1,4 +1,4 @@
-#imports:
+# imports:
 import os
 import json
 from argparse import ArgumentParser
@@ -9,9 +9,9 @@ from matplotlib.patches import Rectangle
 from minizinc import Instance, Model, Solver
 from minizinc.result import Status
 
-#******* User Defined Functions *******
+# ******* User Defined Functions *******
 
-#create output folders if not already created:
+# create output folders if not already created:
 def create_folder_structure():
     # root folders:
     project_folder = os.path.abspath(os.path.join(os.getcwd(), "..", ".."))

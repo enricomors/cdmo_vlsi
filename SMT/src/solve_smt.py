@@ -1,8 +1,8 @@
+# imports:
 import glob
 import json
 import logging
 from argparse import ArgumentParser
-
 from matplotlib import pyplot as plt
 from matplotlib.patches import Rectangle
 from z3 import *
@@ -13,7 +13,9 @@ import numpy as np
 from model import solve_instance
 from model_rot import solve_instance_rot
 
-#create output folders if not already created:
+# ******* User Defined Functions *******
+
+# create output folders if not already created:
 def create_folder_structure():
     # root folders:
     project_folder = os.path.abspath(os.path.join(os.getcwd(), "..", ".."))
@@ -49,28 +51,32 @@ def create_folder_structure():
 
 #get runtimes
 def get_runtimes(args):
-
-    # create runtime folder if doesn't exists:
-    runtimes_folder = os.path.join(project_folder, 'runtimes')
-
-    if not os.path.exists(runtimes_folder):
-        os.mkdir(runtimes_folder)
-        print("Runtimes folder has been created correctly")
-
-    s = f"SMT"\
+    # define path and name of runtime file:
+    file_name = f"SMT"\
         f'{"-sb" if args.symmetry_breaking else ""}'\
         f'{"-rot" if args.rotation else ""}'\
         '.json'
 
-    file_name = os.path.join(runtimes_folder, s)
+    file_path = os.path.join(runtimes_folder, file_name)
 
-    if os.path.isfile(file_name):  # z3 I hate your timeout bug so much
-        with open(file_name) as f:
-            data = {int(k): v for k, v in json.load(f).items()}
+    # if file exists load it and extract dict values, otherwise return empty dict:
+    if os.path.isfile(file_path):
+        with open(file_path) as f:
+
+            # load dictionary:
+            dictionary = json.load(f)
+
+            #############PERCHE' COPIO UN DIZIONARIO GIA FATTO IN UN DIZIONARIO NUOVO? Forse sono perché le 'keys' k andrebbero convertite tutte a int?
+            data = {}
+
+            for k, v in dictionary.items():
+                int_key = int(k)
+                data[int_key] = v
+
     else:
         data = {}
 
-    return data, file_name
+    return data, file_path
 
 '''
 def plot_board(width, height, blocks, index, show_plot=False, show_axis=False):
@@ -105,41 +111,50 @@ def plot_board(width, height, blocks, index, show_plot=False, show_axis=False):
     plt.close(fig)
 '''
 
-# Try to solve instance before timeout
+#solve given instance:
 def start_solving(instance, runtimes, index, args):
     print("-" * 20)
     print(f'Solving Instance {index}')
 
+    #select model based on whether rotation is enabled or not:
     if args.rotation:
-        model = solve_instance_rot  # use rotation model
+        model = solve_instance_rot
     else:
-        model = solve_instance     # use standard model
+        model = solve_instance
 
+    #start a new process:
     p = multiprocessing.Process(target=model, args=(instance, index, args))
-
     p.start()
+
+    #start a timer to track the elapsed time:
     start_time = time.time()
+
+    #stop process if timeout exceeded:
     p.join(args.timeout)
 
-    # If thread is still active kill it
+    #kill thread if still active:
     if p.is_alive():
         print("Timeout Reached without finding a solution")
         p.kill()
         p.join()
 
-    # Save runtime to json
+    #save elapsed time within runtimes and save file:
     elapsed_time = time.time() - start_time
     runtimes[index] = elapsed_time
+
+
     with open(runtimes_filename, 'w') as f:
         json.dump(runtimes, f)
+
     print(f"Time elapsed: {elapsed_time:.2f}")
 
-
+#******* Main Code *******
 if __name__ == "__main__":
 
-    # create folders if not already created:
+    #create folders structure:
     project_folder, outputs_folder, runtimes_folder, instances_folder = create_folder_structure()
 
+    #define command line arguments:
     parser = ArgumentParser()
     parser.add_argument('-s', '--start', type=int, help='First instance to solve', default=1)
     parser.add_argument('-e', '--end', type=int, help='Last instance to solve', default=40)
@@ -149,6 +164,9 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
+    #QUI DOBBIAMO FARE L'ARGUMENT CHECK COME IN CP??
+
+    #get runtimes:
     runtimes, runtimes_filename = get_runtimes(args)
     '''
     print(runtimes_filename)
@@ -158,22 +176,34 @@ if __name__ == "__main__":
     print(file_names)
     i = 1
     '''
-    instances_folder = os.path.join(project_folder, 'instances')
+
+    #solve Instances in range:
+    print(f'Solving instances {args.start} - {args.end} using SMT model')
 
     for i in range(args.start, args.end + 1):
         print('=' * 20)
         print(f'Instance {i}')
 
+        # open instance and extract instance data:
         with open(os.path.join(instances_folder, f'ins-{i}.txt')) as f:
             lines = f.readlines()
 
+        # get list of lines:
         lines = [l.strip('\n') for l in lines]
+
+        # get width of the map:
         w = int(lines[0].strip('\n'))
+
+        # get number of blocks:
         n = int(lines[1].strip('\n'))
+
+        # get list of the dimensions of each circuit:
         dim = [ln.split(' ') for ln in lines[2:]]
+
+        # get x and y coordinates:
         x, y = list(zip(*map(lambda x_y: (int(x_y[0]), int(x_y[1])), dim)))
 
-        # Sort circuits by area
+        # sort circuits by area:
         xy = np.array([x, y]).T
         areas = np.prod(xy, axis=1)
         sorted_idx = np.argsort(areas)[::-1]
@@ -181,13 +211,13 @@ if __name__ == "__main__":
         x = list(map(int, xy[:, 0]))
         y = list(map(int, xy[:, 1]))
 
-        # lower and upper bounds for height
+        # lower and upper bounds for height:
         min_area = np.prod(xy, axis=1).sum()
         minh = max(max(y),int(min_area / w))
         maxh = np.sum(y)
 
-        # Pass instance parameters to the solver
+        # pass instance parameters to the solver:
         instance = {"w": w, 'n': n, 'inputx': x, 'inputy': y, 'minh': minh, 'maxh': maxh}
-        start_solving(instance, runtimes, i, args)
 
-        i += 1
+        # begin to find solution:
+        start_solving(instance, runtimes, i, args)
