@@ -47,9 +47,9 @@ def create_folder_structure():
 def get_runtimes():
     # define path and name of runtime file:
     file_name = f'CP-{args.solver}' \
-                "-sb" if args.symmetry_breaking else "" \
-                                                     "-rot" if args.rotation else "" \
-                                                                                  f'-heu{args.heu}-restart{args.restart}.json'
+                f'{"-sb" if args.symmetry_breaking else ""}' \
+                f'{"-rot" if args.rotation else ""}' \
+                f'-heu{args.heu}-restart{args.restart}.json'
 
     file_path = os.path.join(runtimes_folder, file_name)
 
