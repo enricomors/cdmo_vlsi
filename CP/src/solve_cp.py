@@ -131,7 +131,7 @@ if __name__ == "__main__":
     parser.add_argument('-s', '--start', type=int, help='First instance to solve', default=1)
     parser.add_argument('-e', '--end', type=int, help='Last instance to solve', default=40)
     parser.add_argument('-t', '--timeout', type=int, help='Timeout (ms)', default=300000)
-    parser.add_argument('-r', '--rotation', action="store_true", help="enables circuits rotation")
+    parser.add_argument('-r', '--rotation', action="store_true", help="enables circuits rotation", default=True)
     parser.add_argument('-sb', '--symmetry_breaking', action="store_true", help="enables symmetry breaking")
     parser.add_argument('--solver', type=str, help='CP solver (default: chuffed)', default='chuffed')
     parser.add_argument('--heu', type=str, help='CP search heuristic (default: input_order, min)', default='input_order')
@@ -214,8 +214,8 @@ if __name__ == "__main__":
         instance['n'] = n
 
         if args.rotation:
-            instance['inx'] = x
-            instance['iny'] = y
+            instance['xinput'] = x
+            instance['yinput'] = y
 
         else:
             instance['x'] = x
@@ -258,6 +258,7 @@ if __name__ == "__main__":
 
         else:
             print('Not solved within timeout')
+            # heights[i] = 'UNSAT' ---> TODO: entry for instances not solved
 
         #save heights
         with open(heights_filepath, 'w') as f:

@@ -12,6 +12,33 @@ import multiprocessing
 
 import numpy as np
 
+
+def get_heights(heights_folder, args):
+    # define path and name of runtime file:
+    file_name = f'SAT' \
+                f'{"-sb" if args.symmetry_breaking else ""}' \
+                f'{"-rot" if args.rotation else ""}' \
+                f'.json'
+
+    file_path = os.path.join(heights_folder, file_name)
+
+    # if file exists load it and extract dict values, otherwise return empty dict:
+    if os.path.isfile(file_path):
+        with open(file_path) as f:
+
+            # load dictionary:
+            dictionary = json.load(f)
+            data = {}
+
+            for k, v in dictionary.items():
+                int_key = int(k)
+                data[int_key] = v
+    else:
+        data = {}
+
+    return data, file_path
+
+
 # creates and plots the colour map with rectangles:
 def plot_board(width, height, blocks, instance, show_plot=False, show_axis=False, verbose=False):
 
@@ -45,7 +72,6 @@ def plot_board(width, height, blocks, instance, show_plot=False, show_axis=False
     # save colormap in .png format at given path:
     project_folder = os.path.abspath(os.path.join(os.getcwd(), "..", ".."))
     figure_path = os.path.join(project_folder, "SAT", "out", "base", "images", f"ins-{instance}.png")
-
     plt.savefig(figure_path)
 
     # check if file was saved at correct path:
@@ -146,17 +172,11 @@ def order_enc(instance, index, args):
                 s.add(Or(prop))
 
     # domain reducing constraints of px and py:
-    project_folder = os.path.abspath(os.path.join(os.getcwd(), "..", ".."))
-
     for i in range(n):
         for e in range(w - x[i], w):
-            figure_folder = os.path.join(project_folder, "SAT", "out", "base", "images", f"ins-{i}.png")
-
-    plt.savefig(figure_folder)
-
-    s.add(px[i][e])
-    for f in range(maxh - y[i], maxh):
-        s.add(py[i][f])
+            s.add(px[i][e])
+        for f in range(maxh - y[i], maxh):
+            s.add(py[i][f])
 
     # symmetry breaking constraints:
     if args.symmetry_breaking:
@@ -239,12 +259,21 @@ def order_enc(instance, index, args):
     out += '\n'.join([f"{xi} {yi} {xhati} {yhati}"
                       for xi, yi, xhati, yhati in zip(instance['inputx'], instance['inputy'],
                                                       instance['xhat'], instance['yhat'])])
+
     # save output string in .txt format at given path:
     project_folder = os.path.abspath(os.path.join(os.getcwd(), "..", ".."))
     text_path = os.path.join(project_folder, 'SAT', 'out', 'base', 'texts', f'out-{index}.txt')
 
     with open(text_path, 'w') as f:
         f.write(out)
+
+    # save height
+    heights_folder = os.path.join(project_folder, 'heights')
+    heights, heights_filepath = get_heights(heights_folder, args)
+    heights[index] = int(instance['h'])
+
+    with open(heights_filepath, 'w') as f:
+        json.dump(heights, f)
 
     # creating a visualization of the solution and saving it to a file:
     res = [(xi, yi, xhati, yhati)

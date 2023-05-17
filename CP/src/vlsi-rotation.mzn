@@ -35,7 +35,7 @@ then y[i] == xinput[i] /\ x[i] == yinput[i]
 else x[i] == xinput[i] /\ y[i] == yinput[i] endif);
 
 % constraint for square circuits
-constraint forall (i in circuits) (xinput[i] == yinput[i] -> rotated f[i] = false);
+constraint forall (i in circuits) (xinput[i] == yinput[i] -> rotated[i] = false);
 
 % Search
 string: search;

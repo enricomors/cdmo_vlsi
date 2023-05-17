@@ -45,10 +45,17 @@ def create_folder_structure():
         os.mkdir(runtimes_folder)  # cdmo_vlsi/runtimes
         print("Runtimes folder has been created correctly!")
 
+    # check if heights folder already exists:
+    heights_folder = os.path.join(project_folder, 'heights')
+
+    if not os.path.exists(heights_folder):
+        os.mkdir(heights_folder)  # cdmo_vlsi/heights
+        print("Heights folder has been created correctly!")
+
     #instances folder
     instances_folder = os.path.join(project_folder, 'instances')
 
-    return project_folder, outputs_folder, runtimes_folder, instances_folder
+    return project_folder, outputs_folder, heights_folder, instances_folder
 
 
 def get_runtimes(args):
@@ -76,6 +83,7 @@ def get_runtimes(args):
         data = {}
 
     return data, file_path
+
 
 '''
 def plot_board(width, height, blocks, index, show_plot=False, show_axis=False):
@@ -107,7 +115,7 @@ def plot_board(width, height, blocks, index, show_plot=False, show_axis=False):
 '''
 
 #solve given instance:
-def start_solving(instance, runtimes, index, args):
+def start_solving(instance, index, args):
     print("-" * 20)
     print(f'Solving Instance {index}')
 
@@ -135,10 +143,6 @@ def start_solving(instance, runtimes, index, args):
 
     #save elapsed time within runtimes and save file:
     elapsed_time = time.time() - start_time
-    runtimes[index] = elapsed_time
-
-    with open(runtimes_filename, 'w') as f:
-        json.dump(runtimes, f)
 
     print(f"Time elapsed: {elapsed_time:.2f}")
 
@@ -159,8 +163,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # QUI DOBBIAMO FARE L'ARGUMENT CHECK COME IN CP??
-    # get runtimes:
-    runtimes, runtimes_filename = get_runtimes(args)
 
     # solve Instances in range:
     print(f'Solving instances {args.start} - {args.end} using SAT model')
@@ -205,4 +207,4 @@ if __name__ == "__main__":
         instance = {"w": w, 'n': n, 'inputx': x, 'inputy': y, 'minh': minh, 'maxh': maxh}
 
         # begin to find solution:
-        start_solving(instance, runtimes, i, args)
+        start_solving(instance, i, args)

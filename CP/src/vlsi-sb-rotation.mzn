@@ -7,17 +7,17 @@ int: minh; % lower bound for plate height
 
 set of int: circuits = 1..n;
 
-array [circuits] of 1..w: inx;
-array [circuits] of 1..max_h: iny;
+array [circuits] of 1..w: xinput;
+array [circuits] of 1..maxh: yinput;
 
 array [circuits] of var 1..w: x;
 array [circuits] of var 1..maxh: y;
 array [circuits] of var bool: rotated;
 
-var min_h..max_h: h; % height of the plate
+var minh..maxh: h; % height of the plate
 
-array [circuits] of var 0..w-min(inx): xhat; % horizontal coordinate of circuits
-array [circuits] of var 0..maxh-min(iny): yhat; % vertical coordinate of circuits
+array [circuits] of var 0..w-min(xinput): xhat; % horizontal coordinate of circuits
+array [circuits] of var 0..maxh-min(yinput): yhat; % vertical coordinate of circuits
 
 % constraints
 constraint forall(i in circuits)(yhat[i] < h);
@@ -31,8 +31,8 @@ constraint cumulative(yhat, y, x, w) :: domain;
 
 % rotation constraint
 constraint forall (i in circuits)(if rotated[i]
-then y[i] == inx [i] /\ x[i] == iny [i]
-else x[i] == inx [i] /\ y[i] == iny [i] endif);
+then y[i] == xinput [i] /\ x[i] == yinput [i]
+else x[i] == xinput [i] /\ y[i] == yinput [i] endif);
 
 % symmetry breaking constraints
 
@@ -54,7 +54,7 @@ constraint symmetry_breaking_constraint(
 constraint symmetry_breaking_constraint(lex_lesseq([xhat[1], yhat[1]], [xhat[2],yhat[2]]));
 
 % constraint for square circuits
-constraint forall (i in circuits) (inx [i] == iny [i] -> rotation [i] = false);
+constraint forall (i in circuits) (xinput [i] == yinput [i] -> rotated[i] = false);
 
 % Search
 string: search;
