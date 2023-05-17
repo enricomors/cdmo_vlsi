@@ -33,46 +33,42 @@ def create_folder_structure():
 
         print("Output folders have been created correctly!")
 
-    #check if runtimes folder already exists:
-    runtimes_folder = os.path.join(project_folder, 'runtimes')
+    #check if heights folder already exists:
+    heights_folder = os.path.join(project_folder, 'heights')
 
-    if not os.path.exists(runtimes_folder):
-        os.mkdir(runtimes_folder)  # cdmo_vlsi/runtimes
-        print("Runtimes folder has been created correctly!")
+    if not os.path.exists(heights_folder):
+        os.mkdir(heights_folder)  # cdmo_vlsi/heights
+        print("Heights folder has been created correctly!")
 
     #instance folder:
     instances_folder = os.path.join(project_folder, 'instances')
 
-    return project_folder, outputs_folder, runtimes_folder, instances_folder
+    return project_folder, outputs_folder, heights_folder, instances_folder
 
-#get runtimes:
-def get_runtimes(args):
-    # define path and name of runtime file:
+
+def get_heights(args):
+    # define path and name of heights file:
     file_name = f'CP-{args.solver}' \
                 f'{"-sb" if args.symmetry_breaking else ""}' \
                 f'{"-rot" if args.rotation else ""}' \
                 f'-heu{args.heu}-restart{args.restart}.json'
 
-    file_path = os.path.join(runtimes_folder, file_name)
+    file_path = os.path.join(heights_folder, file_name)
 
     # if file exists load it and extract dict values, otherwise return empty dict:
     if os.path.isfile(file_path):
         with open(file_path) as f:
-
-            #load dictionary:
+            # load dictionary:
             dictionary = json.load(f)
-
-            #############PERCHE' COPIO UN DIZIONARIO GIA FATTO IN UN DIZIONARIO NUOVO? Forse sono perché le 'keys' k andrebbero convertite tutte a int?
             data = {}
-
             for k, v in dictionary.items():
                 int_key = int(k)
                 data[int_key] = v
-
     else:
         data = {}
 
     return data, file_path
+
 
 
 # creates and plots the colour map with rectangles:
@@ -126,7 +122,7 @@ def plot_board(width, height, blocks, instance, rotated, show_plot=False, show_a
 if __name__ == "__main__":
 
     #create folders structure:
-    project_folder, outputs_folder, runtimes_folder , instances_folder = create_folder_structure()
+    project_folder, outputs_folder, heights_folder, instances_folder = create_folder_structure()
 
     #define command line arguments:
     parser = ArgumentParser()
@@ -169,8 +165,8 @@ if __name__ == "__main__":
     model = Model(f"vlsi{mod}.mzn")
     solver = Solver.lookup(f'{args.solver}')
 
-    #get runtimes:
-    runtimes, runtimes_filepath = get_runtimes(args)
+    #get heights:
+    heights, heights_filepath = get_heights(args)
 
     #solve Instances in range:
     print(f'Solving instances {args.start} - {args.end} using CP model')
@@ -258,13 +254,11 @@ if __name__ == "__main__":
 
             plot_board(instance['w'], res.objective, solution, i, res['rotated'] if args.rotation else None)
 
-            #total runtime in seconds:
-            runtimes[i] = (res.statistics['time'].microseconds / (10 ** 6)) + res.statistics['time'].seconds
+            heights[i] = res.objective
 
         else:
             print('Not solved within timeout')
-            runtimes[i] = 300
 
-        #save runtimes
-        with open(runtimes_filepath, 'w') as f:
-            json.dump(runtimes, f)
+        #save heights
+        with open(heights_filepath, 'w') as f:
+            json.dump(heights, f)
