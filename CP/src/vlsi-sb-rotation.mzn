@@ -62,7 +62,7 @@ string: restart;
 
 ann: search_xhat = 
 if search == "dom" then
-  int_search(xhat, dom_w_deg, indomain_random)
+  int_search(xhat, dom_w_deg, indomain_min)
 elseif search == "ff" then
   int_search(xhat, first_fail, indomain_min)
 else
@@ -71,7 +71,7 @@ endif;
 
 ann: search_yhat = 
 if search == "dom" then 
-  int_search(yhat, dom_w_deg, indomain_random)
+  int_search(yhat, dom_w_deg, indomain_min)
 elseif search == "ff" then
   int_search(yhat, first_fail, indomain_min)
 else
