@@ -94,7 +94,8 @@ def order_enc(instance, index, args):
     # solver:
     s = Solver()
 
-    # variables definition:
+    # VARIABLES
+
     px = [[Bool(f'px_{i + 1}_{e}') for e in range(w)] for i in range(n)]
     py = [[Bool(f"py_{j + 1}_{f}") for f in range(maxh)] for j in range(n)]
 
@@ -104,99 +105,120 @@ def order_enc(instance, index, args):
     # ph_o is true if all rectangles are packed under height o
     ph = [Bool(f"ph_{o}") for o in range(maxh + 1)]
 
-    # constraints:
+    # CONSTRAINTS
 
-    # order encoding constraints:
-    for i in range(n):
-        for e in range(w - x[i]):
-            s.add(Or(Not(px[i][e]), px[i][e + 1]))
-        for f in range(maxh - y[i]):
-            s.add(Or(Not(py[i][f]), py[i][f + 1]))
+    def add_3l_clause(direction, i, j):
+        if direction == 'x':
+            rectangle_measure = x[i]
+            strip_measure = w
+            lrud = lr
+            pxy = px
+        elif direction == 'y':
+            rectangle_measure = y[i]
+            strip_measure = maxh
+            lrud = ud
+            pxy = py
+        else:
+            print("The direction must be either 'x' or 'y'")
+            return
 
-    for o in range(maxh - 1):
-        s.add(Or(Not(ph[o]), ph[o + 1]))
+        # if rectangle 1 is left of rectangle 2, rectangle 2 cannot be at the left of the right edge of rectangle 1.
+        for k in range(rectangle_measure):
+            s.add(Or(Not(lrud[i][j]), Not(pxy[j][k])))
 
-    # under-height packing constraint:
-    for o in range(maxh):
+        for k in range(strip_measure - rectangle_measure):
+            k1 = k + rectangle_measure
+            s.add(Or(Not(lrud[i][j]), pxy[i][k], Not(pxy[j][k1])))
+
+    def domain_reducing_constraints():
         for i in range(n):
-            s.add(Or(Not(ph[o]), py[i][o - y[i]]))
+            for e in range(w - x[i], w):
+                s.add(px[i][e])
+            for f in range(maxh - y[i], maxh):
+                s.add(py[i][f])
 
-    # non-overlapping constraints:
-    for i in range(n):
-        for j in range(i + 1, n):
-            if i < j:
-                s.add(Or(lr[i][j], lr[j][i], ud[i][j], ud[j][i]))
+        # largest rectangle:
+        if args.symmetry_breaking:
+            for e in range((w - x[1]) // 2, w - x[1]):
+                s.add(px[1][e])
+            for f in range((maxh - y[1]) // 2, maxh - y[1]):
+                s.add(py[1][f])
 
-    # ensures that the two components do not overlap in the horizontal direction:
-    def no_overlap_x(i, j):
-        res = []
-        res.append([Not(px[j][x[i] - 1])])
-        for e in range(w - x[i] - 1):
-            res.append([px[i][e], Not(px[j][e + x[i]])])
-        res.append([px[i][w - x[i] - 1]])
-        return res
-
-    # ensures that the two components do not overlap in the vertical direction:
-    def no_overlap_y(i, j):
-        res = []
-        res.append([Not(py[j][y[i] - 1])])
-        for f in range(maxh - y[i] - 1):
-            res.append([py[i][f], Not(py[j][f + y[i]])])
-        res.append([py[i][maxh - y[i] - 1]])
-        return res
-
-    # add the 3-literal clauses for non-overlapping constraints
-    # i.e. ¬lr[i][j] \/ ¬px[j][e + w_i] \/ px[i][e]
-    for i in range(n):
-        for j in range(i + 1, n):
-
-            for pr in no_overlap_x(i, j):
-                prop = [Not(lr[i][j])] + pr
-                s.add(Or(prop))
-
-            for pr in no_overlap_x(j, i):
-                prop = [Not(lr[j][i])] + pr
-                s.add(Or(prop))
-
-            for pr in no_overlap_y(i, j):
-                prop = [Not(ud[i][j])] + pr
-                s.add(Or(prop))
-
-            for pr in no_overlap_y(j, i):
-                prop = [Not(ud[j][i])] + pr
-                s.add(Or(prop))
-
-    # domain reducing constraints of px and py:
-    for i in range(n):
-        for e in range(w - x[i], w):
-            s.add(px[i][e])
-        for f in range(maxh - y[i], maxh):
-            s.add(py[i][f])
-
-    # symmetry breaking constraints:
-    if args.symmetry_breaking:
-
-        # ordering for same size rectangles:
+    def ordering_constraints():
         for i in range(n):
-            for j in range(i + 1, n):
-                if x[i] == x[j] and y[i] == y[j]:
-                    s.add(Not(lr[j][i]))
-                    s.add(Or(lr[i][j], Not(ud[j][i])))
+            for e in range(w - x[i] - 1):
+                s.add(Implies(px[i][e], px[i][e + 1]))
 
-        # large rectangles constraint:
-        for i in range(n):
-            for j in range(i + 1, n):
-                if x[i] + x[j] > w:
-                    s.add(And(Not(lr[i][j]), Not(lr[j][i])))
-                if y[i] + y[j] > maxh:
-                    s.add(And(Not(ud[i][j]), Not(ud[j][i])))
+            for f in range(maxh - y[i] - 1):
+                s.add(Implies(py[i][f], py[i][f + 1]))
 
-        # domain reduction for largest rectangle:
-        for e in range((w - x[0]) // 2):
-            s.add(px[0][e])
+        for o in range(maxh - 1):
+            s.add(Or(Not(ph[o]), ph[o + 1]))
 
-        for f in range((maxh - y[0]) // 2):
-            s.add(py[0][f])
+    def under_height_packing_constraints():
+        for o in range(maxh):
+            for i in range(n):
+                s.add(Or(Not(ph[o]), py[i][o - y[i]]))
+
+    def add_non_overlapping_constraints(i, j, to_add=[True, True, True, True]):
+        literals_4l = []
+        if to_add[0]:
+            literals_4l.append(lr[i][j])
+            add_3l_clause('x', i, j)
+        if to_add[1]:
+            literals_4l.append(lr[j][i])
+            add_3l_clause('x', j, i)
+        if to_add[2]:
+            literals_4l.append(ud[i][j])
+            add_3l_clause('y', i, j)
+        if to_add[3]:
+            literals_4l.append(ud[j][i])
+            add_3l_clause('y', j, i)
+
+        s.add(Or(literals_4l))
+
+    def non_overlapping_constraints():
+        for j in range(n):
+            for i in range(j):
+                add_non_overlapping_constraints(i, j)
+
+    def non_overlapping_constraints_sb():
+        for j in range(n):
+            for i in range(j):
+                # LS: Reducing the domain for the largest rectangle
+                if j == 1:
+                    large_width = x[i] > (w - x[1]) // 2
+                    large_height = y[i] > (maxh - y[1]) // 2
+                    if large_width and large_height:
+                        add_non_overlapping_constraints(i, j, [False, True, False, True])
+                    elif large_width:
+                        add_non_overlapping_constraints(i, j, [False, True, True, True])
+                    elif large_height:
+                        add_non_overlapping_constraints(i, j, [True, True, False, True])
+                    else:
+                        add_non_overlapping_constraints(i, j)
+                # SR: Breaking symmetries for same-sized rectangles
+                elif x[i] == x[j] and y[i] == y[j]:
+                    add_non_overlapping_constraints(i, j, [True, False, True, True])
+                    s.add(Or(Not(ud[i][j], lr[j][i])))
+                # LR (horizontal)
+                elif x[i] + x[j] > w:
+                    add_non_overlapping_constraints(i, j, [False, False, True, True])
+                # LR (vertical)
+                elif y[i] + y[j] > maxh:
+                    add_non_overlapping_constraints(i, j, [True, True, False, False])
+                else:
+                    add_non_overlapping_constraints(i, j)
+
+    def add_constraints():
+        domain_reducing_constraints()
+        ordering_constraints()
+        under_height_packing_constraints()
+
+        if args.symmetry_breaking:
+            non_overlapping_constraints_sb()
+        else:
+            non_overlapping_constraints()
 
     # convert SAT boolean variables into cartesian coordinates:
     def bool_to_coords(model, px, py):
@@ -218,10 +240,10 @@ def order_enc(instance, index, args):
         return xhat, yhat
 
     # First test for satisfiability
+    add_constraints()
 
     s.push()
     s.add(ph[minh])
-
     tries = 0
 
     while s.check() == unsat:
@@ -231,6 +253,7 @@ def order_enc(instance, index, args):
 
         s.add(ph[minh + tries])
 
+    # Get model
     m = s.model()
 
     # extract values of optimal solution:
@@ -241,7 +264,6 @@ def order_enc(instance, index, args):
     print(f'x = {xhat}')
     print(f'y = {yhat}')
     print(f'h = {h_sol}')
-
     print('Found optimal solution')
 
     # updating the instance dictionary:
@@ -258,7 +280,6 @@ def order_enc(instance, index, args):
     # save output string in .txt format at given path:
     project_folder = os.path.abspath(os.path.join(os.getcwd(), "..", ".."))
     text_path = os.path.join(project_folder, 'SAT', 'out', 'base', 'texts', f'out-{index}.txt')
-
     with open(text_path, 'w') as f:
         f.write(out)
 
@@ -266,7 +287,6 @@ def order_enc(instance, index, args):
     heights_folder = os.path.join(project_folder, 'heights')
     heights, heights_filepath = get_heights(heights_folder, args)
     heights[index] = int(instance['h'])
-
     with open(heights_filepath, 'w') as f:
         json.dump(heights, f)
 
@@ -275,3 +295,5 @@ def order_enc(instance, index, args):
            for xi, yi, xhati, yhati in zip(instance['inputx'], instance['inputy'], instance['xhat'], instance['yhat'])]
 
     plot_board(instance['w'], instance['h'], res, index)
+
+    return instance

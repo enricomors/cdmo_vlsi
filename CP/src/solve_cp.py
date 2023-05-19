@@ -258,7 +258,7 @@ if __name__ == "__main__":
 
         else:
             print('Not solved within timeout')
-            # heights[i] = 'UNSAT' ---> TODO: entry for instances not solved
+            heights[i] = 'UNSAT'
 
         #save heights
         with open(heights_filepath, 'w') as f:
