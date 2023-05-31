@@ -44,10 +44,17 @@ def create_folder_structure():
         os.mkdir(runtimes_folder)  # cdmo_vlsi/runtimes
         print("Runtimes folder has been created correctly!")
 
+    # check if heights folder already exists:
+    heights_folder = os.path.join(project_folder, 'heights')
+
+    if not os.path.exists(heights_folder):
+        os.mkdir(heights_folder)  # cdmo_vlsi/heights
+        print("Heights folder has been created correctly!")
+
     #instance folder:
     instances_folder = os.path.join(project_folder, 'instances')
 
-    return project_folder, outputs_folder, runtimes_folder, instances_folder
+    return project_folder, outputs_folder, runtimes_folder, heights_folder, instances_folder
 
 #get runtimes
 def get_runtimes(args):
@@ -142,7 +149,6 @@ def start_solving(instance, runtimes, index, args):
     elapsed_time = time.time() - start_time
     runtimes[index] = elapsed_time
 
-
     with open(runtimes_filename, 'w') as f:
         json.dump(runtimes, f)
 
@@ -152,7 +158,7 @@ def start_solving(instance, runtimes, index, args):
 if __name__ == "__main__":
 
     #create folders structure:
-    project_folder, outputs_folder, runtimes_folder, instances_folder = create_folder_structure()
+    project_folder, outputs_folder, runtimes_folder, heights_folder, instances_folder = create_folder_structure()
 
     #define command line arguments:
     parser = ArgumentParser()

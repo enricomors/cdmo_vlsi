@@ -13,6 +13,32 @@ import multiprocessing
 import numpy as np
 
 
+def get_heights(heights_folder, args):
+    # define path and name of runtime file:
+    file_name = f'SAT' \
+                f'{"-sb" if args.symmetry_breaking else ""}' \
+                f'{"-rot" if args.rotation else ""}' \
+                f'.json'
+
+    file_path = os.path.join(heights_folder, file_name)
+
+    # if file exists load it and extract dict values, otherwise return empty dict:
+    if os.path.isfile(file_path):
+        with open(file_path) as f:
+
+            # load dictionary:
+            dictionary = json.load(f)
+            data = {}
+
+            for k, v in dictionary.items():
+                int_key = int(k)
+                data[int_key] = v
+    else:
+        data = {}
+
+    return data, file_path
+
+
 # creates and plots the colour map with rectangles:
 def plot_board(width, height, blocks, instance, show_plot=False, show_axis=False, verbose=False):
     # define pyplot colour map of len(blocks) number of colours:

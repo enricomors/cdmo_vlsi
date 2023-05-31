@@ -74,6 +74,7 @@ def mip_rotation(instance, index, args):
     # variables definition:
     xhat = [m.addVar(vtype=GRB.INTEGER, name=(f'xhat_{i}'), lb=0) for i in range(n)]
     yhat = [m.addVar(vtype=GRB.INTEGER, name=(f'yhat_{i}'), lb=0) for i in range(n)]
+
     h = m.addVar(vtype=GRB.INTEGER, name='h')
 
     rot = m.addVars(instance.n_circuits, vtype=GRB.BINARY)

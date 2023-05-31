@@ -14,6 +14,32 @@ import multiprocessing
 import numpy as np
 
 
+def get_heights(heights_folder, args):
+    # define path and name of runtime file:
+    file_name = f'SMT' \
+                f'{"-sb" if args.symmetry_breaking else ""}' \
+                f'{"-rot" if args.rotation else ""}' \
+                f'.json'
+
+    file_path = os.path.join(heights_folder, file_name)
+
+    # if file exists load it and extract dict values, otherwise return empty dict:
+    if os.path.isfile(file_path):
+        with open(file_path) as f:
+
+            # load dictionary:
+            dictionary = json.load(f)
+            data = {}
+
+            for k, v in dictionary.items():
+                int_key = int(k)
+                data[int_key] = v
+    else:
+        data = {}
+
+    return data, file_path
+
+
 # creates and plots the colour map with rectangles:
 def plot_board(width, height, blocks, instance, show_plot=False, show_axis=False, verbose=False):
     # define pyplot colour map of len(blocks) number of colours:
@@ -184,10 +210,6 @@ def solve_instance(instance, index, args):
         opt.add(sb_biggest_in_first_quadrande)
         opt.add(sb_biggest_lex_less)
 
-
-
-
-
     opt.minimize(plate_height)
 
     opt.set("timeout", 300*1000)  # 5 minutes timeout
@@ -198,34 +220,37 @@ def solve_instance(instance, index, args):
         print("Solving time (s): ", round(time.time()-start_time, 3))
         height = model.eval(plate_height).as_long()
         print("Height:", height)
-        print("\n")
         xs, ys = [], []
         for i in range(n):
             xs.append(model.evaluate(x[i]))
             ys.append(model.evaluate(y[i]))
-        print("x:",xs)
-        print("y:",ys)
+        print("x:", xs)
+        print("y:", ys)
 
         instance['h'] = height
         instance['xsol'] = xs
         instance['ysol'] = ys
-        # output file
+
+        # generate output string
         out = f"{instance['w']} {instance['h']}\n{instance['n']}\n"
         out += '\n'.join([f"{xi} {yi} {xhati} {yhati}"
                           for xi, yi, xhati, yhati in zip(instance['inputx'],
                                                           instance['inputy'],
                                                           instance['xsol'], instance['ysol'])])
 
+        # save output string in .txt format at given path:
         project_folder = os.path.abspath(os.path.join(os.getcwd(), "..", ".."))
-
-        file_name = 'out'\
-                    f'{index}'\
-                    '.txt'
-
+        file_name = f'out-{index}.txt'
         pathname = os.path.join(project_folder, 'SMT', 'out', 'base', 'texts', file_name)
-
         with open(pathname, 'w') as f:
             f.write(out)
+
+        # save height
+        heights_folder = os.path.join(project_folder, 'heights')
+        heights, heights_filepath = get_heights(heights_folder, args)
+        heights[index] = int(instance['h'])
+        with open(heights_filepath, 'w') as f:
+            json.dump(heights, f)
 
         # creating a visualization of the solution and saving it to a file:
         res = [(xi, yi, xhati, yhati)
