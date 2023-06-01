@@ -1,6 +1,7 @@
 # imports:
 import os
 import json
+import warnings
 from argparse import ArgumentParser
 from datetime import timedelta
 import numpy as np
@@ -104,6 +105,8 @@ def get_runtimes(args):
 
 # creates and plots the colour map with rectangles:
 def plot_board(width, height, blocks, instance, rotated, show_plot=False, show_axis=False, verbose=False):
+    # suppress get_cmap warning
+    warnings.filterwarnings('ignore', message="The get_cmap function was deprecated in Matplotlib 3.7")
     # define pyplot colour map of len(blocks) number of colours:
     cmap = plt.cm.get_cmap('jet', len(blocks))
 

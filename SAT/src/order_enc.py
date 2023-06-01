@@ -1,4 +1,5 @@
 import json
+import warnings
 
 from matplotlib import pyplot as plt
 from matplotlib.patches import Rectangle
@@ -36,7 +37,8 @@ def get_heights(heights_folder, args):
 
 # creates and plots the colour map with rectangles:
 def plot_board(width, height, blocks, instance, show_plot=False, show_axis=False, verbose=False):
-
+    # suppress get_cmap warning
+    warnings.filterwarnings('ignore', message="The get_cmap function was deprecated in Matplotlib 3.7")
     # define pyplot colour map of len(blocks) number of colours:
     cmap = plt.cm.get_cmap('jet', len(blocks))
 
