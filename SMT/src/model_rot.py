@@ -16,7 +16,7 @@ import numpy as np
 
 def get_heights(heights_folder, args):
     # define path and name of runtime file:
-    file_name = f'SAT' \
+    file_name = f'SMT' \
                 f'{"-sb" if args.symmetry_breaking else ""}' \
                 f'{"-rot" if args.rotation else ""}' \
                 f'.json'
@@ -232,14 +232,54 @@ def solve_instance_rot(instance, index, args):
         print("Solving time (s): ", round(time.time() - start_time, 3))
         height = model.eval(plate_height).as_long()
         print("Height:", height)
-        print("\n")
-        xs, ys = [], []
+        xs, ys, rot = [], [], []
         for i in range(n):
             xs.append(model.evaluate(x[i]))
             ys.append(model.evaluate(y[i]))
+            rot.append(model.evaluate(rotation_c[i]))
+            # if the i-th rectangle is rotated
+            if model.evaluate(rotation_c[i]):
+                print(f'rectangle {i} is rotated')
+                # invert width and height of the i-th rectangle
+                true_x, true_y = heights[i], widths[i]
+                widths[i], heights[i] = true_x, true_y
         print("x:", xs)
         print("y:", ys)
-        # print("rotations vector: ", rotation_c)
+
+        # updates instance
+        instance['h'] = height
+        instance['xsol'] = xs
+        instance['ysol'] = ys
+        instance['inputx'] = widths
+        instance['inputy'] = heights
+
+        # generate output string
+        out = f"{instance['w']} {instance['h']}\n{instance['n']}\n"
+        out += '\n'.join([f"{xi} {yi} {xhati} {yhati}"
+                          for xi, yi, xhati, yhati in zip(instance['inputx'], instance['inputy'],
+                                                          instance['xsol'], instance['ysol'])])
+
+        # save output string in .txt format at given path:
+        project_folder = os.path.abspath(os.path.join(os.getcwd(), "..", ".."))
+        file_name = f'out-{index}.txt'
+        pathname = os.path.join(project_folder, 'SMT', 'out', 'rotation', 'texts', file_name)
+        with open(pathname, 'w') as f:
+            f.write(out)
+
+        # save height
+        heights_folder = os.path.join(project_folder, 'heights')
+        heights, heights_filepath = get_heights(heights_folder, args)
+        heights[index] = int(instance['h'])
+        with open(heights_filepath, 'w') as f:
+            json.dump(heights, f)
+
+        # creating a visualization of the solution and saving it to a file:
+        res = [(xi, yi, xhati, yhati)
+               for xi, yi, xhati, yhati in
+               zip(instance['inputx'], instance['inputy'],
+                   instance['xsol'], instance['ysol'])]
+        plot_board(instance['w'], instance['h'], res, index)
+
         return xs, ys, height, time.time() - start_time
     else:
         print("Time limit excedeed\n")
