@@ -54,6 +54,25 @@ def create_folder_structure():
 
     return project_folder, outputs_folder, heights_folder, runtimes_folder, instances_folder
 
+#get upper bound
+def get_upperbound(heights, widths, n, w):
+
+    res = []
+    s = 0
+    start = 0
+    for i in range(n):
+        if s + widths[i] > w:
+            try:
+                res.append(max(heights[start:i]))
+            except:
+                None
+            start = i
+            s = heights[i]
+        else:
+            s += heights[i]
+    res.append(max(heights[start:]))
+    return sum(res)
+
 
 def get_heights(args):
     # define path and name of heights file:
@@ -196,7 +215,7 @@ if __name__ == "__main__":
     if args.rotation:
         mod += '-rotation'
 
-    model = Model(f"vlsi{mod}.mzn")
+    model = Model(f"cp{mod}.mzn")
     solver = Solver.lookup(f'{args.solver}')
 
     # get heights:
@@ -231,7 +250,7 @@ if __name__ == "__main__":
         # get list of the dimensions of each circuit:
         dim = [ln.split(' ') for ln in lines[2:]]
 
-        # get x and y coordinates:
+        # get x and y dimensions:
         x, y = list(zip(*map(lambda x_y: (int(x_y[0]), int(x_y[1])), dim)))
 
         # sort circuits by area:
@@ -245,7 +264,7 @@ if __name__ == "__main__":
         # lower and upper bounds for height:
         min_area = np.prod(xy, axis=1).sum()
         minh = int(min_area / w)
-        maxh = np.sum(y)
+        maxh = get_upperbound(y, x, n, w)
 
         instance['w'] = w
         instance['n'] = n

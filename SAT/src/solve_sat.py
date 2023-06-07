@@ -11,8 +11,8 @@ import time
 import os
 import multiprocessing
 import numpy as np
-from order_enc_rot import order_enc_rot
-from order_enc import order_enc
+from sat_rotation import order_enc_rot
+from sat_base import order_enc
 
 
 # ******* User Defined Functions *******
@@ -85,6 +85,25 @@ def get_runtimes(args):
 
     return data, file_path
 
+#get upper bound:
+def get_upperbound(heights, widths, n, w):
+
+    res = []
+    s = 0
+    start = 0
+    for i in range(n):
+        if s + widths[i] > w:
+            try:
+                res.append(max(heights[start:i]))
+            except:
+                None
+            start = i
+            s = heights[i]
+        else:
+            s += heights[i]
+    res.append(max(heights[start:]))
+    return sum(res)
+
 
 # solve given instance:
 def start_solving(instance, runtimes, index, args):
@@ -139,7 +158,6 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    # QUI DOBBIAMO FARE L'ARGUMENT CHECK COME IN CP??
     runtimes, runtimes_filename = get_runtimes(args)
 
     # solve Instances in range:
@@ -179,7 +197,7 @@ if __name__ == "__main__":
         # lower and upper bounds for height:
         min_area = np.prod(xy, axis=1).sum()
         minh = int(min_area / w)
-        maxh = np.sum(y)
+        maxh = get_upperbound(y, x, n, w)
 
         # Pass instance parameters to the solver:
         instance = {"w": w, 'n': n, 'inputx': x, 'inputy': y, 'minh': minh, 'maxh': maxh}

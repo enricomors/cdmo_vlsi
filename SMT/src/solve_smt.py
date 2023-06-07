@@ -10,8 +10,8 @@ import time
 import os
 import multiprocessing
 import numpy as np
-from model import solve_instance
-from model_rot import solve_instance_rot
+from smt_base import solve_instance
+from smt_rotation import solve_instance_rot
 
 # ******* User Defined Functions *******
 
@@ -35,6 +35,7 @@ def create_folder_structure():
         os.mkdir(os.path.join(outputs_folder, 'rotation', 'images'))  # cdmo_vlsi/SMT/out/rotation/images
         os.mkdir(os.path.join(outputs_folder, 'rotation', 'texts'))  # cdmo_vlsi/SMT/out/rotation/texts
 
+
         print("Output folders have been created correctly!")
 
     #check if runtimes folder already exists:
@@ -56,7 +57,7 @@ def create_folder_structure():
 
     return project_folder, outputs_folder, runtimes_folder, heights_folder, instances_folder
 
-#get runtimes
+#get runtimes:
 def get_runtimes(args):
     # define path and name of runtime file:
     file_name = f"SMT"\
@@ -73,7 +74,6 @@ def get_runtimes(args):
             # load dictionary:
             dictionary = json.load(f)
 
-            #############PERCHE' COPIO UN DIZIONARIO GIA FATTO IN UN DIZIONARIO NUOVO? Forse sono perché le 'keys' k andrebbero convertite tutte a int?
             data = {}
 
             for k, v in dictionary.items():
@@ -85,38 +85,24 @@ def get_runtimes(args):
 
     return data, file_path
 
-'''
-def plot_board(width, height, blocks, index, show_plot=False, show_axis=False):
-    cmap = plt.cm.get_cmap('jet', len(blocks))
-    fig, ax = plt.subplots(figsize=(10, 10))
-    for component, (w, h, x, y) in enumerate(blocks):
-        label = f'{w}x{h}, ({x},{y})'
-       
-        if rotation is not None:
-           label += f', R={1 if rotation[component] else 0}'
+#get upper bound:
+def get_upperbound(heights, widths, n, w):
 
-        ax.add_patch(Rectangle((x, y), w, h, facecolor=cmap(component), edgecolor='k', label=label, lw=2, alpha=0.8))
-    ax.set_ylim(0, height)
-    ax.set_xlim(0, width)
-    ax.set_xlabel('width', fontsize=15)
-    ax.set_ylabel('length', fontsize=15)
-    # ax.legend()
-    ax.set_title(f'Instance {index}, size (WxH): {width}x{height}', fontsize=22)
-    if not show_axis:
-        ax.set_xticks([])
-        ax.set_yticks([])
-
-    plt.savefig(os.path.join(project_folder, "out", "images", f"fig-ins-{index}.png"))
-
-    figure_folder = os.path.join(project_folder, "SMT", "out", "images", f"ins-{instance}.png")
-    plt.savefig(figure_folder)
-    print(f"figure ins-{instance}.png has been correctly saved at path '{figure_folder}'")
-
-    if show_plot:
-        plt.show(block=False)
-        plt.pause(1)
-    plt.close(fig)
-'''
+    res = []
+    s = 0
+    start = 0
+    for i in range(n):
+        if s + widths[i] > w:
+            try:
+                res.append(max(heights[start:i]))
+            except:
+                None
+            start = i
+            s = heights[i]
+        else:
+            s += heights[i]
+    res.append(max(heights[start:]))
+    return sum(res)
 
 #solve given instance:
 def start_solving(instance, runtimes, index, args):
@@ -174,14 +160,6 @@ if __name__ == "__main__":
 
     #get runtimes:
     runtimes, runtimes_filename = get_runtimes(args)
-    '''
-    print(runtimes_filename)
-    # Solve Instances in range
-    file_names = os.listdir(os.path.join(project_folder, 'instances'))
-    file_names.sort(key=mySort)
-    print(file_names)
-    i = 1
-    '''
 
     #solve Instances in range:
     print(f'Solving instances {args.start} - {args.end} using SMT model')
@@ -220,7 +198,7 @@ if __name__ == "__main__":
         # lower and upper bounds for height:
         min_area = np.prod(xy, axis=1).sum()
         minh = max(max(y),int(min_area / w))
-        maxh = np.sum(y)
+        maxh = get_upperbound(y, x, n, w)
 
         # pass instance parameters to the solver:
         instance = {"w": w, 'n': n, 'inputx': x, 'inputy': y, 'minh': minh, 'maxh': maxh}

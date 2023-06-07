@@ -1,8 +1,6 @@
 # TO-DOs
 
-- SAT Rotation da checckare
-- completare requirements.txt
-- inserire funzioncina HMax (aggiornare report nel preprocessing)
-- provare a far funzionare il jupyter notebook (dopo tutti i test)
-- mettere legenda su ogni plot
-- 
+- sistemare label, titoli e percorsi del jupyter notebook (dopo tutti i test)
+- runnare instanze varie, prendere risultati e scrivere sezione dedicata nel report
+- scrivere conclusioni report
+- riscrivere parti su SAT che non ho capito su order encoder.
