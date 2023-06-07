@@ -161,7 +161,6 @@ if __name__ == "__main__":
     # define command line arguments:
     parser = ArgumentParser()
 
-    # parser.add_argument('technology', type=str, help='The technology to use (CP, SAT or SMT)')          ***********CAPIRE SE QUESTA RIGA VA TOLTAAA
     parser.add_argument('-s', '--start', type=int, help='First instance to solve', default=1)
     parser.add_argument('-e', '--end', type=int, help='Last instance to solve', default=40)
     parser.add_argument('-t', '--timeout', type=int, help='Timeout (ms)', default=300000)
