@@ -6,7 +6,7 @@ from matplotlib import pyplot as plt
 from matplotlib.patches import Rectangle
 
 # creates and plots the colour map with rectangles:
-def plot_board(width, height, blocks, instance, show_plot=False, show_axis=False, verbose=False):
+def plot_board(width, height, blocks, instance, show_plot=False, show_axis=True, verbose=False):
 
     # define pyplot colour map of len(blocks) number of colours:
     cmap = plt.cm.get_cmap('jet', len(blocks))
@@ -18,8 +18,8 @@ def plot_board(width, height, blocks, instance, show_plot=False, show_axis=False
     for component, (w, h, x, y) in enumerate(blocks):
         label = f'{w}x{h}, ({x},{y})'
 
-        #if rotation is not None:
-        #    label += f', R={1 if rotation[component] else 0}'
+        if rotation is not None:
+            label += f', R={1 if rotation[component] else 0}'
         ax.add_patch(Rectangle((x, y), w, h, facecolor=cmap(component), edgecolor='k', label=label, lw=2, alpha=0.8))
 
     # set plot properties:
@@ -27,7 +27,7 @@ def plot_board(width, height, blocks, instance, show_plot=False, show_axis=False
     ax.set_xlim(0, width)
     ax.set_xlabel('width', fontsize=15)
     ax.set_ylabel('length', fontsize=15)
-    # ax.legend()
+    ax.legend()
     ax.set_title(f'Instance {instance}, size (WxH): {width}x{height}', fontsize=22)
 
     # print axis if wanted:
