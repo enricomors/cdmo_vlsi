@@ -78,8 +78,8 @@ Command line arguments:
 
 ## SMT
 
-...
+To solve the instances using SMT, you first have to move into the `SMT/src` folder, and launch the `solve_smt.py` script
 
 ## MIP
 
-...
+To solve the instances using SMT, you first have to move into the `MIP/src` folder, and launch the `solve_mip.py` script
