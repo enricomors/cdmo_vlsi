@@ -41,7 +41,7 @@ def get_heights(heights_folder, args):
 
 
 # creates and plots the colour map with rectangles:
-def plot_board(width, height, blocks, instance, show_plot=False, show_axis=False, verbose=False):
+def plot_board(width, height, blocks, rotation, instance, show_plot=False, show_axis=False, verbose=False):
     # suppress get_cmap warning
     warnings.filterwarnings('ignore', message="The get_cmap function was deprecated in Matplotlib 3.7")
     # define pyplot colour map of len(blocks) number of colours:
@@ -54,8 +54,8 @@ def plot_board(width, height, blocks, instance, show_plot=False, show_axis=False
     for component, (w, h, x, y) in enumerate(blocks):
         label = f'{w}x{h}, ({x},{y})'
 
-        #if rotation is not None:
-        #   label += f', R={1 if rotation[component] else 0}'
+        if rotation is not None:
+           label += f', R={1 if rotation[component] else 0}'
 
         ax.add_patch(
             Rectangle((x.as_long(), y.as_long()), w, h, facecolor=cmap(component), edgecolor='k', label=label, lw=2,
@@ -278,7 +278,7 @@ def solve_instance_rot(instance, index, args):
                for xi, yi, xhati, yhati in
                zip(instance['inputx'], instance['inputy'],
                    instance['xsol'], instance['ysol'])]
-        plot_board(instance['w'], instance['h'], res, index)
+        plot_board(instance['w'], instance['h'], res, rot, index)
 
         return xs, ys, height, time.time() - start_time
     else:

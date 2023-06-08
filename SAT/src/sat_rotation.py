@@ -36,7 +36,7 @@ def get_heights(heights_folder, args):
 
 
 # creates and plots the colour map with rectangles:
-def plot_board(width, height, blocks, instance, show_plot=False, show_axis=False, verbose=False):
+def plot_board(width, height, blocks, rotation, instance, show_plot=False, show_axis=False, verbose=False):
     # suppress get_cmap warning
     warnings.filterwarnings('ignore', message="The get_cmap function was deprecated in Matplotlib 3.7")
     # define pyplot colour map of len(blocks) number of colours:
@@ -45,11 +45,14 @@ def plot_board(width, height, blocks, instance, show_plot=False, show_axis=False
     # define figure size:
     fig, ax = plt.subplots(figsize=(10, 10))
 
+
     # add each rectangle block in the colour map:
     for component, (w, h, x, y) in enumerate(blocks):
         label = f'{w}x{h}, ({x},{y})'
-        #if rotation is not None:
-          #  label += f', R={1 if rotation[component] else 0}'
+
+
+        if rotation is not None:
+            label += f', R={1 if rotation[component] else 0}'
         ax.add_patch(Rectangle((x, y), w, h, facecolor=cmap(component), edgecolor='k', label=label, lw=2, alpha=0.8))
 
     # set plot properties:
@@ -314,6 +317,7 @@ def order_enc_rot(instance, index, args):
     # check for rotated circuits
     x, y = check_rotation(m, R)
     h_sol = np.max([yhat[i] + y[i] for i in range(len(yhat))])  # Compute height
+    R_sol = [is_true(R[i]) for i in range(n)]
 
     # prints:
     print(f'x = {xhat}')
@@ -352,6 +356,8 @@ def order_enc_rot(instance, index, args):
     # creating a visualization of the solution and saving it to a file:
     res = [(xi, yi, xhati, yhati)
            for xi, yi, xhati, yhati in zip(instance['inputx'], instance['inputy'], instance['xhat'], instance['yhat'])]
-    plot_board(instance['w'], instance['h'], res, index)
+
+
+    plot_board(instance['w'], instance['h'], res, R_sol, index)
 
     return instance
