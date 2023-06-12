@@ -139,10 +139,11 @@ def order_enc(instance, index, args):
 
         # largest rectangle:
         if args.symmetry_breaking:
-            for e in range((w - x[1]) // 2, w - x[1]):
-                s.add(px[1][e])
-            for f in range((maxh - y[1]) // 2, maxh - y[1]):
-                s.add(py[1][f])
+            m = np.argmax([width * height for (width, height) in zip(x, y)])
+            for e in range((w - x[m]) // 2, w - x[m]):
+                s.add(px[m][e])
+            for f in range((maxh - y[m]) // 2, maxh - y[m]):
+                s.add(py[m][f])
 
     def ordering_constraints():
         for i in range(n):
@@ -183,12 +184,14 @@ def order_enc(instance, index, args):
                 add_non_overlapping_constraints(i, j)
 
     def non_overlapping_constraints_sb():
+        m = np.argmax([width * height for (width, height) in zip(x, y)])
+
         for j in range(n):
             for i in range(j):
                 # LS: Reducing the domain for the largest rectangle
-                if j == 1:
-                    large_width = x[i] > (w - x[1]) // 2
-                    large_height = y[i] > (maxh - y[1]) // 2
+                if j == m:
+                    large_width = x[i] > (w - x[m]) // 2
+                    large_height = y[i] > (maxh - y[m]) // 2
                     if large_width and large_height:
                         add_non_overlapping_constraints(i, j, [False, True, False, True])
                     elif large_width:

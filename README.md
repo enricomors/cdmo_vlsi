@@ -78,8 +78,22 @@ Command line arguments:
 
 ## SMT
 
-To solve the instances using SMT, you first have to move into the `SMT/src` folder, and launch the `solve_smt.py` script
+To solve the instances using SMT, you first have to move into the `SMT/src` folder, and launch the `solve_smt.py` script:
+
+```
+python solve_sm.py [-h] [-s START] [-e END] [-t TIMEOUT] [-r] [-sb]
+
+```
+
+The arguments are the same as for the SAT script
 
 ## MIP
 
-To solve the instances using SMT, you first have to move into the `MIP/src` folder, and launch the `solve_mip.py` script
+To solve the instances using SMT, you first have to move into the `MIP/src` folder, and launch the `solve_mip.py` script:
+
+```
+python solve_sm.py [-h] [-s START] [-e END] [-t TIMEOUT] [-r] [-sb]
+
+```
+
+The arguments are the same as for the SAT and SMT scripts
