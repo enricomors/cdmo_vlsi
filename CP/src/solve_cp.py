@@ -54,13 +54,19 @@ def create_folder_structure():
 
     return project_folder, outputs_folder, heights_folder, runtimes_folder, instances_folder
 
+
 #get upper bound
 def get_upperbound(heights, widths, n, w):
 
-    res = []
-    s = 0
-    start = 0
+    # initialize variables:
+    res = []     #to store the maximum heights
+    s = 0        #accumulated horizontal width
+    start = 0    #start index
+
+    # cycle all blocks
     for i in range(n):
+
+        # if the new inserted block exceeds the width of the plate append maximum height and start a new line:
         if s + widths[i] > w:
             try:
                 res.append(max(heights[start:i]))
@@ -68,12 +74,17 @@ def get_upperbound(heights, widths, n, w):
                 None
             start = i
             s = heights[i]
+
+        # otherwise keep inserting blocks horizontally:
         else:
             s += heights[i]
+
+    # once all pieces are added, return maximum height
     res.append(max(heights[start:]))
     return sum(res)
 
 
+#get optimal heights of each instance:
 def get_heights(args):
     # define path and name of heights file:
     file_name = f'CP-{args.solver}' \
@@ -98,6 +109,7 @@ def get_heights(args):
     return data, file_path
 
 
+#get runtimes of each instance
 def get_runtimes(args):
     # define path and name of heights file:
     file_name = f'CP-{args.solver}' \
@@ -124,8 +136,10 @@ def get_runtimes(args):
 
 # creates and plots the colour map with rectangles:
 def plot_board(width, height, blocks, instance, rotated, show_plot=False, show_axis=False, verbose=False):
-    # suppress get_cmap warning
+
+    # suppress get_cmap warning:
     warnings.filterwarnings('ignore', message="The get_cmap function was deprecated in Matplotlib 3.7")
+
     # define pyplot colour map of len(blocks) number of colours:
     cmap = plt.cm.get_cmap('jet', len(blocks))
 
@@ -192,7 +206,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    # check for argument errors
+    # check for argument errors:
     # solver:
     if args.solver not in ('gecode', 'chuffed'):
         raise ValueError(f'wrong solver {args.solver};\nsupported ones are gecode and chuffed')
@@ -215,7 +229,10 @@ if __name__ == "__main__":
     if args.rotation:
         mod += '-rotation'
 
+    # select model based on arguments of command line prompt:
     model = Model(f"cp{mod}.mzn")
+
+    #select solver based on arguments of command line prompt:
     solver = Solver.lookup(f'{args.solver}')
 
     # get heights:
@@ -227,6 +244,7 @@ if __name__ == "__main__":
     # solve Instances in range:
     print(f'Solving instances {args.start} - {args.end} using CP model')
 
+    #solve from start instance to end instance (DEFAULT: start = 1, end = 41):
     for i in range(args.start, args.end + 1):
         print('=' * 20)
         print(f'Instance {i}')
@@ -238,7 +256,7 @@ if __name__ == "__main__":
         with open(os.path.join(instances_folder, f'ins-{i}.txt')) as f:
             lines = f.readlines()
 
-        # get list of lines:
+        # get a list of lines:
         lines = [l.strip('\n') for l in lines]
 
         # get width of the map:
