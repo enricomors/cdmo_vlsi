@@ -205,8 +205,7 @@ if __name__ == "__main__":
     parser.add_argument('-r', '--rotation', action="store_true", help="enables circuits rotation")
     parser.add_argument('-sb', '--symmetry_breaking', action="store_true", help="enables symmetry breaking")
     parser.add_argument('--solver', type=str, help='CP solver (default: chuffed)', default='chuffed')
-    parser.add_argument('--heu', type=str, help='CP search heuristic (default: input_order, min)',
-                        default='input_order')
+    parser.add_argument('--heu', type=str, help='CP search heuristic (default: input_order, min)', default='input_order')
     parser.add_argument('--restart', type=str, help='CP restart strategy (default: none)', default='none')
 
     args = parser.parse_args()
@@ -237,7 +236,7 @@ if __name__ == "__main__":
     # select model based on arguments of command line prompt:
     model = Model(f"cp{mod}.mzn")
 
-    #select solver based on arguments of command line prompt:
+    # select solver based on arguments of command line prompt:
     solver = Solver.lookup(f'{args.solver}')
 
     # get heights:
@@ -249,7 +248,7 @@ if __name__ == "__main__":
     # solve Instances in range:
     print(f'Solving instances {args.start} - {args.end} using CP model')
 
-    #solve from start instance to end instance (DEFAULT: start = 1, end = 41):
+    # solve from start instance to end instance (DEFAULT: start = 1, end = 41):
     for i in range(args.start, args.end + 1):
         print('=' * 20)
         print(f'Instance {i}')
@@ -276,23 +275,50 @@ if __name__ == "__main__":
         # get x and y dimensions:
         x, y = list(zip(*map(lambda x_y: (int(x_y[0]), int(x_y[1])), dim)))
 
-        # sort circuits by area:
+
+        # *** sort circuits by area ***:
+
+        # create a matrix with horizontal and vertical dimensions of circuits:
         xy = np.array([x, y]).T
+
+        # compute area of each block
         areas = np.prod(xy, axis=1)
+
+        # indices to sort areas array in descending order:
         sorted_idx = np.argsort(areas)[::-1]
+
+        # re-order the xy array using the new indeces
         xy = xy[sorted_idx]
+
+        # re-order horizontal and vertical dimensions based on the sorted indeces:
         x = list(map(int, xy[:, 0]))
         y = list(map(int, xy[:, 1]))
 
-        # lower and upper bounds for height:
-        min_area = np.prod(xy, axis=1).sum()
-        minh = int(min_area / w)
-        maxh = get_upperbound(y, x, n, w)    #heights, widths, number of blocks, plate's width
 
+
+        # *** define lower and upper bounds for height ***:
+
+        # height's lower bound:
+        min_area = np.prod(xy, axis=1).sum()  #sum of the areas of all blocks
+        minh = int(min_area / w)
+
+        # height's upper bound
+        maxh = get_upperbound(y, x, n, w)
+
+
+
+        # *** initialize variables based on instance *** :
+
+        # width:
         instance['w'] = w
+
+        # number of blocks:
         instance['n'] = n
 
+        # if rotation is enabled, save original width and heigth
         if args.rotation:
+
+            # original input dimensions before rotating block:
             instance['xinput'] = x
             instance['yinput'] = y
 
@@ -300,27 +326,41 @@ if __name__ == "__main__":
             instance['x'] = x
             instance['y'] = y
 
+        # height's lower bound:
         instance['minh'] = minh
+
+        # height's upper bound:
         instance['maxh'] = maxh
 
+        # search heuristic:
         instance['search'] = args.heu
+
+        # restart strategy:
         instance['restart'] = args.restart
 
-        # solve instance with timeout:
-        res = instance.solve(timeout=timedelta(milliseconds=args.timeout))
 
+
+        # *** solve each instance before timeout exceeds ***:
+
+        # solve instance:
+        res = instance.solve(timeout=timedelta(milliseconds=args.timeout)) #5 minutes timeout
+
+        # check whether the instance was solved within timeout:
         if res.status == Status.OPTIMAL_SOLUTION:
+
+            # generate output string that contains information about the execution of the instance:
             out = f"{instance['w']} {res.objective}\n{instance['n']}\n"
             out += '\n'.join([f"{xi} {yi} {xhati} {yhati}"
                               for xi, yi, xhati, yhati in zip(res['x'] if args.rotation else instance['x'],
                                                               res['y'] if args.rotation else instance['y'],
                                                               res['xhat'], res['yhat'])])
 
-            # open output directory either for base model or rotation model
+            # save output string on a text file:
             with open(os.path.join(outputs_folder, 'rotation' if args.rotation else 'base', 'texts', f'out-{i}.txt'),
                       'w') as f:
                 f.write(out)
 
+            # prints:
             print('Instance solved')
             print(f'Solution status: {res.status}')
             print(f'h = {res.objective}')
@@ -334,21 +374,26 @@ if __name__ == "__main__":
 
             plot_board(instance['w'], res.objective, solution, i, res['rotated'] if args.rotation else None)
 
-            # total runtime in seconds:
+            # runtime of i-th instance converted to seconds:
             runtimes[i] = (res.statistics['time'].microseconds / (10 ** 6)) + res.statistics['time'].seconds
 
             # optimal height value found:
             heights[i] = res.objective
 
+        # if the timeout:
         else:
             print('Not solved within timeout')
+
+            # set height and runtime to default values of unsatisfied instances:
             heights[i] = 'UNSAT'
             runtimes[i] = 300
 
-        # save heights
+        # *** save results of each instance in a json file for both heights and runtimes: ***
+
+        # save heights:
         with open(heights_filepath, 'w') as f:
             json.dump(heights, f)
 
-        # save runtimes
+        # save runtimes:
         with open(runtimes_filepath, 'w') as f:
             json.dump(runtimes, f)
