@@ -77,24 +77,38 @@ def get_runtimes(args):
     return data, file_path
 
 
-def Hmax(h, ws, n, w):
+#get upper bound
+def get_upperbound(heights, widths, n, w):
 
-    res = []
-    s = 0
-    start = 0
+    # initialize variables:
+    previous_row_height = 0     #to store the highest height of the previous row
+    h_res = 0                   #maximum found height
+    acc_width = 0               #accumulated horizontal width
+
+    # cycle all blocks
     for i in range(n):
-        if s + ws[i] > w:
-            try:
-                res.append(max(h[start:i]))
-            except:
-                None
-            start = i
-            s = h[i]
-        else:
-            s += h[i]
-    res.append(max(h[start:]))
-    return sum(res)
 
+        # if the new inserted block does not exceed the width of the plate, then keep inserting blocks horizontally:
+        if acc_width + widths[i] < w:
+            # add to the value of accumulated width the width of the i-th block:
+            acc_width += widths[i]
+
+            # if the height of current block is higher than the highest height found since now, then update it:
+            if heights[i] + previous_row_height > h_res:
+                h_res = heights[i] + previous_row_height
+
+        #otherwise save current maximum height and start a new line:
+        else:
+            #re-initialize the value of accumulated width to the width of i-th block (the first of new row)
+            acc_width = widths[i]
+
+            #set maximum height of previous row:
+            previous_row_height = h_res
+
+            #update maximum height:
+            h_res = h_res + heights[i]
+
+    return h_res
 
 #solve given instance:
 def start_solving(instance, runtimes, index, args):
@@ -192,7 +206,7 @@ if __name__ == "__main__":
         # lower and upper bounds for height:
         min_area = np.prod(xy, axis=1).sum()
         minh = int(min_area / w)
-        maxh = Hmax(y, x, n, w)
+        maxh = get_upperbound(y, x, n, w)
 
         # pass instance parameters to the solver:
         instance = {"w": w, 'n': n, 'inputx': x, 'inputy': y, 'minh': minh, 'maxh': maxh}
