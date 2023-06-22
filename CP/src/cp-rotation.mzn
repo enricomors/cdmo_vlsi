@@ -1,28 +1,53 @@
 include "globals.mzn";
 
-int: w; % width of the plate
-int: n; % number of circuits
-int: maxh; % higher bound for plate height
-int: minh; % lower bound for plate height
 
+%%%%% Parameters
+
+% width of the plate
+int: w;
+
+% number of circuits
+int: n;
+
+% height's upper and lower bounds
+int: maxh;
+int: minh;
+
+% indices of circuits
 set of int: circuits = 1..n;
 
+% arrays of heights and widths of each circuit before rotating
 array [circuits] of 1..w: xinput;
 array [circuits] of 1..maxh: yinput;
 
+% arrays of heights and widths of each circuit
 array [circuits] of var 1..w: x;
 array [circuits] of var 1..maxh: y;
+
+% array of booleans where if a piece is rotated the array has value True, otherwise false
 array [circuits] of var bool: rotated;
 
-var minh..maxh: h; % height of the plate
 
-array [circuits] of var 0..w-min(xinput): xhat; % horizontal coordinate of circuits
-array [circuits] of var 0..maxh-min(yinput): yhat; % vertical coordinate of circuits
 
-% constraints
+
+%%%%% Variables
+
+% height of the plate
+var minh..maxh: h;
+
+% horizontal and vertical coordinates
+array [circuits] of var 0..w-min(xinput): xhat;
+array [circuits] of var 0..maxh-min(yinput): yhat;
+
+
+
+
+%%%%% constraints
 constraint forall(i in circuits)(yhat[i] < h);
 constraint forall(i in circuits)(xhat[i] + x[i] <= w);
 constraint forall(i in circuits)(yhat[i] + y[i] <= h);
+
+% No-overlapping constraint
 constraint diffn(xhat, yhat, x, y) :: domain;
 
 % implied constraints
@@ -37,7 +62,7 @@ else x[i] == xinput[i] /\ y[i] == yinput[i] endif);
 % constraint for square circuits
 constraint forall (i in circuits) (xinput[i] == yinput[i] -> rotated[i] = false);
 
-% Search
+%%%%% Search Strategies
 string: search;
 string: restart;
 
@@ -68,6 +93,9 @@ else
   restart_none
 endif;
 
+
+
+%%%%% Solve parameters
 solve :: search_xhat
       :: search_yhat
       :: restart_ann

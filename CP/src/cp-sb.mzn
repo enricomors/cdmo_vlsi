@@ -1,28 +1,44 @@
 include "globals.mzn";
 
-% Parameters
-int: w; % width of the plate
-int: n; % number of circuits to be placed
-int: maxh; 
+%%%%% Parameters
+
+% width of the plate
+int: w;
+
+% number of circuits
+int: n;
+
+% height's upper and lower bounds
+int: maxh;
 int: minh;
 
+% indices of circuits
 set of int: circuits = 1..n;
-array [circuits] of int: y; % heights of each circuit
-array [circuits] of int: x; % weights of each circuit
 
-% Variables
-array [circuits] of var 0..w-min(x): xhat; % horizontal vertex
-array [circuits] of var 0..maxh-min(y): yhat; % vertical vertex
-var minh..maxh: h; % height of the plate
+% arrays of heights and widths of each circuit
+array [circuits] of int: y;
+array [circuits] of int: x;
+
+
+
+%%%%% Variables
+
+%horizontal and vertical coordinates
+array [circuits] of var 0..w-min(x): xhat;
+array [circuits] of var 0..maxh-min(y): yhat;
+
+% height of the plate
+var minh..maxh: h;
 
 % index of the circuit with the biggest area
 % int : biggest_circuit_idx = arg_max([y[c] * x[c] | c in circuits]);
 
-% Main constraints
+
+%%%%% constraints
 constraint forall (i in circuits) (xhat[i] <= w - x[i]);
 constraint forall (i in circuits) (yhat[i] <= h - y[i]);
 
-% Implied constraints
+% implied constraints
 constraint cumulative(xhat, x, y, h)::domain;
 constraint cumulative(yhat, y, x, w)::domain;
 
@@ -46,7 +62,7 @@ constraint symmetry_breaking_constraint(
 % force the biggest block to be always to the bottom left of the second biggest
 constraint symmetry_breaking_constraint(lex_lesseq([xhat[1], yhat[1]], [xhat[2],yhat[2]]));
 
-% Search
+%%%%% Search Strategies
 string: search;
 string: restart;
 
@@ -77,10 +93,15 @@ else
   restart_none
 endif;
 
+
+%%%%% Solve parameters
 solve :: search_xhat
       :: search_yhat
       :: restart_ann
          minimize h;
+
+
+
 %output [
 %  "Plate height: ", show(h), "\n",
 %  "Solution: \n", 
